@@ -2,20 +2,34 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public struct Point 
+{
+    int x;
+    int y;
+
+    public Point(int initX, int initY)
+    {
+        x = initX;
+        y = initY;
+    }
+}
+
 public class MazeController : MonoBehaviour
 {
+
+    [SerializeField] int _mazeSize = 10;
     // Start is called before the first frame update
-    int[,] _maze = new int[22 , 22];
-    GameObject[,] _spriteObjectArrMaze             = new GameObject[11, 11];
-    SpriteRenderer[,] _spriteRendererArrMaze       = new SpriteRenderer[11, 11];
-    GameObject[,] _spriteObjectArrWallLeft         = new GameObject[11, 11];
-    GameObject[,] _spriteObjectArrWallBottom       = new GameObject[11, 11];
-    GameObject[,] _spriteObjectArrWallRight        = new GameObject[11, 11];
-    GameObject[,] _spriteObjectArrWallTop          = new GameObject[11, 11];
-    SpriteRenderer[,] _spriteRendererArrWallLeft   = new SpriteRenderer[11, 11];
-    SpriteRenderer[,] _spriteRendererArrWallBottom = new SpriteRenderer[11, 11];
-    SpriteRenderer[,] _spriteRendererArrWallRight  = new SpriteRenderer[11, 11];
-    SpriteRenderer[,] _spriteRendererArrWallTop    = new SpriteRenderer[11, 11];
+    int[,] _maze = new int[2002 ,2002];
+    GameObject[,] _spriteObjectArrMaze             = new GameObject[1001, 1001];
+    SpriteRenderer[,] _spriteRendererArrMaze       = new SpriteRenderer[1001, 1001];
+    GameObject[,] _spriteObjectArrWallLeft         = new GameObject[1001, 1001];
+    GameObject[,] _spriteObjectArrWallBottom       = new GameObject[1001, 1001];
+    GameObject[,] _spriteObjectArrWallRight        = new GameObject[1001, 1001];
+    GameObject[,] _spriteObjectArrWallTop          = new GameObject[1001, 1001];
+    SpriteRenderer[,] _spriteRendererArrWallLeft   = new SpriteRenderer[1001, 1001];
+    SpriteRenderer[,] _spriteRendererArrWallBottom = new SpriteRenderer[1001, 1001];
+    SpriteRenderer[,] _spriteRendererArrWallRight  = new SpriteRenderer[1001, 1001];
+    SpriteRenderer[,] _spriteRendererArrWallTop    = new SpriteRenderer[1001, 1001];
     [SerializeField] Sprite _spriteMazeTile;
     [SerializeField] Sprite _spriteWallLeft;
     [SerializeField] Sprite _spriteWallBottom;
@@ -23,6 +37,105 @@ public class MazeController : MonoBehaviour
     [SerializeField] Sprite _spriteWallTop;
     GameObject _objectMazeTilesContainer;
     GameObject _objectMazeWallsContainer;
+
+    void PartitionMazeGood() {
+        bool[,] visited = new bool[1001, 1001];
+        int yCoord;
+        int xCoord;
+        Stack<Point> stackWalls = new Stack<Point>();
+
+        for (yCoord = 1; yCoord <= _mazeSize; yCoord++)
+        {
+            for (xCoord = 1; xCoord <= _mazeSize; xCoord++)
+            {
+                visited[yCoord, xCoord] = false;
+            }
+        }
+
+        visited[1, 1] = true;
+        stackWalls.Push(new Point(3, 2));
+        stackWalls.Push(new Point(2, 3));
+
+        while (stackWalls.Count > 0)
+        {
+            Point crntPoint = stackWalls.Pop();
+        }
+    }
+
+    void PartitionMaze(int topLeftX, int topLeftY, int botRightX, int botRightY, bool horizontal)
+    {
+        int doorCoord;
+        int fixdCoord;
+        int iterCoord;
+
+        if (botRightX - topLeftX <= 3 || topLeftY - botRightY <= 3)
+        {
+            Debug.Log("[ERROR] Bad coords!");
+            return;
+        }
+
+        if (horizontal == true)
+        {
+            do
+            {
+                fixdCoord = Random.Range(botRightY + 1, topLeftY); //on Y axis
+            } while (fixdCoord % 2 == 0) ;
+
+            do
+            {
+                doorCoord = Random.Range(topLeftX + 1, botRightX); //on X axis
+            } while (doorCoord % 2 == 1);
+
+
+            Debug.Log(string.Format("[DEBUG] Parameters {0} {1} {2} {3} {4} \n Fixed Y {5} Door X {6}", topLeftX, topLeftY, botRightX, botRightY, horizontal, fixdCoord, doorCoord));
+
+            if (fixdCoord % 2 == 0)
+            {
+                Debug.Log(string.Format("[ERROR] Invalid fixed coord: {0}.\n{1} {2} {3} {4} {5} {6}", fixdCoord, topLeftX, topLeftY, botRightX, botRightY, horizontal, doorCoord));
+            }
+
+            for (iterCoord = topLeftX + 1; iterCoord < botRightX; iterCoord++)
+            {
+                if (iterCoord != doorCoord)
+                {
+                    _maze[fixdCoord, iterCoord] = 1;
+                }
+            }
+
+            PartitionMaze(topLeftX, topLeftY, botRightX, fixdCoord, false);
+            PartitionMaze(topLeftX, fixdCoord, botRightX, botRightY, false);
+        }
+        else
+        {
+            do
+            {
+                fixdCoord = Random.Range(topLeftX + 1, botRightX); //on X axis
+            } while (fixdCoord % 2 == 0);
+
+            do
+            {
+                doorCoord = Random.Range(botRightY + 1, topLeftY); //on Y axis
+            } while (doorCoord % 2 == 1);
+
+            Debug.Log(string.Format("[DEBUG] Parameters {0} {1} {2} {3} {4} \n Fixed X {5} Door Y {6}", topLeftX, topLeftY, botRightX, botRightY, horizontal, fixdCoord, doorCoord));
+
+            if (fixdCoord % 2 == 0)
+            {
+                Debug.Log(string.Format("[ERROR] Invalid fixed coord: {0}.\n{1} {2} {3} {4} {5} {6}", fixdCoord, topLeftX, topLeftY, botRightX, botRightY, horizontal, doorCoord));
+            }
+
+            for (iterCoord = botRightY + 1; iterCoord < topLeftY; iterCoord++)
+            {
+                if (iterCoord != doorCoord)
+                {
+                    _maze[iterCoord, fixdCoord] = 1;
+                }
+            }
+
+            PartitionMaze(topLeftX, topLeftY, fixdCoord, botRightY, true);
+            PartitionMaze(fixdCoord, topLeftY, botRightX, botRightY, true);
+        }
+    }
 
     void Start()
     {
@@ -35,9 +148,9 @@ public class MazeController : MonoBehaviour
         _objectMazeWallsContainer = new GameObject("MazeWallsContainer");
 
         //init maze array
-        for (yCoord = 1; yCoord <= 21; yCoord++)
+        for (yCoord = 1; yCoord <= _mazeSize*2 + 1; yCoord++)
         {
-            for (xCoord = 1; xCoord <= 21; xCoord++)
+            for (xCoord = 1; xCoord <= _mazeSize * 2 + 1; xCoord++)
             {
                 if (yCoord % 2 == 1 || xCoord % 2 == 1)
                 {
@@ -50,10 +163,13 @@ public class MazeController : MonoBehaviour
             }
         }
 
+        //partition maze
+        PartitionMaze(1, _mazeSize * 2 + 1, _mazeSize * 2 + 1, 1,true);
+
         //init maze sprites game objects
-        for (yCoord = 1; yCoord <= 10; yCoord++)
+        for (yCoord = 1; yCoord <= _mazeSize; yCoord++)
         {
-            for (xCoord = 1; xCoord <= 10; xCoord++)
+            for (xCoord = 1; xCoord <= _mazeSize; xCoord++)
             {
                 xPos = xCoord - 1;
                 yPos = yCoord - 1;
