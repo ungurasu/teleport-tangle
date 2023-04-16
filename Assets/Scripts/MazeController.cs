@@ -4,8 +4,8 @@ using UnityEngine;
 
 public struct Point 
 {
-    int x;
-    int y;
+    public int x;
+    public int y;
 
     public Point(int initX, int initY)
     {
@@ -38,11 +38,13 @@ public class MazeController : MonoBehaviour
     GameObject _objectMazeTilesContainer;
     GameObject _objectMazeWallsContainer;
 
-    void PartitionMazeGood() {
+    void PartitionMaze() {
         bool[,] visited = new bool[1001, 1001];
         int yCoord;
         int xCoord;
-        Stack<Point> stackWalls = new Stack<Point>();
+        int wallsListLenght;
+        Point[] wallsList = new Point[4001];
+        Point[] wallsListTemp = new Point[4001];
 
         for (yCoord = 1; yCoord <= _mazeSize; yCoord++)
         {
@@ -53,87 +55,66 @@ public class MazeController : MonoBehaviour
         }
 
         visited[1, 1] = true;
-        stackWalls.Push(new Point(3, 2));
-        stackWalls.Push(new Point(2, 3));
+        wallsList[0] = new Point(2, 3);
+        wallsList[1] = new Point(3, 2);
+        wallsListLenght = 2;
 
-        while (stackWalls.Count > 0)
+        while (wallsListLenght> 0)
         {
-            Point crntPoint = stackWalls.Pop();
-        }
-    }
+            int index = Random.Range(0, wallsListLenght);
 
-    void PartitionMaze(int topLeftX, int topLeftY, int botRightX, int botRightY, bool horizontal)
-    {
-        int doorCoord;
-        int fixdCoord;
-        int iterCoord;
+            Point currentWall = wallsList[index];
 
-        if (botRightX - topLeftX <= 3 || topLeftY - botRightY <= 3)
-        {
-            Debug.Log("[ERROR] Bad coords!");
-            return;
-        }
-
-        if (horizontal == true)
-        {
-            do
+            System.Array.Copy(wallsList, 0, wallsListTemp, 0, index);
+            if (index < wallsList.Length)
             {
-                fixdCoord = Random.Range(botRightY + 1, topLeftY); //on Y axis
-            } while (fixdCoord % 2 == 0) ;
-
-            do
-            {
-                doorCoord = Random.Range(topLeftX + 1, botRightX); //on X axis
-            } while (doorCoord % 2 == 1);
-
-
-            Debug.Log(string.Format("[DEBUG] Parameters {0} {1} {2} {3} {4} \n Fixed Y {5} Door X {6}", topLeftX, topLeftY, botRightX, botRightY, horizontal, fixdCoord, doorCoord));
-
-            if (fixdCoord % 2 == 0)
-            {
-                Debug.Log(string.Format("[ERROR] Invalid fixed coord: {0}.\n{1} {2} {3} {4} {5} {6}", fixdCoord, topLeftX, topLeftY, botRightX, botRightY, horizontal, doorCoord));
+                System.Array.Copy(wallsList, index + 1, wallsListTemp, index, wallsList.Length - index - 1);
             }
+            wallsList = wallsListTemp;
+            wallsListLenght--;
 
-            for (iterCoord = topLeftX + 1; iterCoord < botRightX; iterCoord++)
+            if (currentWall.x % 2 == 1 && currentWall.x > 1 && currentWall.x < _mazeSize * 2 + 1) // vertical wall
             {
-                if (iterCoord != doorCoord)
+                if (visited[currentWall.y / 2, (currentWall.x - 1) / 2] == false && visited[currentWall.y / 2, (currentWall.x + 1) / 2] == true) // left cell
                 {
-                    _maze[fixdCoord, iterCoord] = 1;
+                    visited[currentWall.y / 2, (currentWall.x - 1) / 2] = true;
+                    _maze[currentWall.y, currentWall.x] = 0;
+                    wallsList[wallsListLenght] = new Point(currentWall.x - 1, currentWall.y + 1); // above wall
+                    wallsList[wallsListLenght + 1] = new Point(currentWall.x - 1, currentWall.y - 1); // bottom wall
+                    wallsList[wallsListLenght + 2] = new Point(currentWall.x - 2, currentWall.y); // left wall
+                    wallsListLenght += 3;
+                }
+                else if (visited[currentWall.y / 2, (currentWall.x - 1) / 2] == true && visited[currentWall.y / 2, (currentWall.x + 1) / 2] == false) // right cell
+                {
+                    visited[currentWall.y / 2, (currentWall.x + 1) / 2] = true;
+                    _maze[currentWall.y, currentWall.x] = 0;
+                    wallsList[wallsListLenght] = new Point(currentWall.x + 1, currentWall.y + 1); // above wall
+                    wallsList[wallsListLenght + 1] = new Point(currentWall.x + 1, currentWall.y - 1); // bottom wall
+                    wallsList[wallsListLenght + 2] = new Point(currentWall.x + 2, currentWall.y); // right wall
+                    wallsListLenght += 3;
                 }
             }
-
-            PartitionMaze(topLeftX, topLeftY, botRightX, fixdCoord, false);
-            PartitionMaze(topLeftX, fixdCoord, botRightX, botRightY, false);
-        }
-        else
-        {
-            do
+            else if (currentWall.y % 2 == 1 && currentWall.y > 1 && currentWall.y < _mazeSize * 2 + 1)// horizontal wall
             {
-                fixdCoord = Random.Range(topLeftX + 1, botRightX); //on X axis
-            } while (fixdCoord % 2 == 0);
-
-            do
-            {
-                doorCoord = Random.Range(botRightY + 1, topLeftY); //on Y axis
-            } while (doorCoord % 2 == 1);
-
-            Debug.Log(string.Format("[DEBUG] Parameters {0} {1} {2} {3} {4} \n Fixed X {5} Door Y {6}", topLeftX, topLeftY, botRightX, botRightY, horizontal, fixdCoord, doorCoord));
-
-            if (fixdCoord % 2 == 0)
-            {
-                Debug.Log(string.Format("[ERROR] Invalid fixed coord: {0}.\n{1} {2} {3} {4} {5} {6}", fixdCoord, topLeftX, topLeftY, botRightX, botRightY, horizontal, doorCoord));
-            }
-
-            for (iterCoord = botRightY + 1; iterCoord < topLeftY; iterCoord++)
-            {
-                if (iterCoord != doorCoord)
+                if (visited[(currentWall.y - 1) / 2, currentWall.x / 2] == false && visited[(currentWall.y + 1) / 2, currentWall.x / 2] == true) // bottom cell
                 {
-                    _maze[iterCoord, fixdCoord] = 1;
+                    visited[(currentWall.y - 1)/ 2, currentWall.x / 2] = true;
+                    _maze[currentWall.y, currentWall.x] = 0;
+                    wallsList[wallsListLenght] = new Point(currentWall.x, currentWall.y - 2); // bottom wall
+                    wallsList[wallsListLenght + 1] = new Point(currentWall.x + 1, currentWall.y - 1); // right wall
+                    wallsList[wallsListLenght + 2] = new Point(currentWall.x - 1, currentWall.y - 1); // left wall
+                    wallsListLenght += 3;
+                }
+                else if (visited[(currentWall.y - 1) / 2, currentWall.x / 2] == true && visited[(currentWall.y + 1) / 2, currentWall.x / 2] == false) // top cell
+                {
+                    visited[(currentWall.y + 1) / 2, currentWall.x / 2] = true;
+                    _maze[currentWall.y, currentWall.x] = 0;
+                    wallsList[wallsListLenght] = new Point(currentWall.x, currentWall.y + 2); // top wall
+                    wallsList[wallsListLenght + 1] = new Point(currentWall.x + 1, currentWall.y + 1); // right wall
+                    wallsList[wallsListLenght + 2] = new Point(currentWall.x - 1, currentWall.y + 1); // left wall
+                    wallsListLenght += 3;
                 }
             }
-
-            PartitionMaze(topLeftX, topLeftY, fixdCoord, botRightY, true);
-            PartitionMaze(fixdCoord, topLeftY, botRightX, botRightY, true);
         }
     }
 
@@ -164,7 +145,7 @@ public class MazeController : MonoBehaviour
         }
 
         //partition maze
-        PartitionMaze(1, _mazeSize * 2 + 1, _mazeSize * 2 + 1, 1,true);
+        PartitionMaze();
 
         //init maze sprites game objects
         for (yCoord = 1; yCoord <= _mazeSize; yCoord++)
@@ -188,7 +169,7 @@ public class MazeController : MonoBehaviour
                     _spriteRendererArrWallBottom[yCoord, xCoord]                    = _spriteObjectArrWallBottom[yCoord, xCoord].AddComponent<SpriteRenderer>();
                     _spriteRendererArrWallBottom[yCoord, xCoord].sprite             = _spriteWallBottom;
                     _spriteRendererArrWallBottom[yCoord, xCoord].transform.parent   = _spriteObjectArrWallBottom[yCoord, xCoord].transform;
-                    _spriteObjectArrWallBottom[yCoord, xCoord].transform.position   = new Vector2(xPos, yPos);
+                    _spriteObjectArrWallBottom[yCoord, xCoord].transform.position   = new Vector3(xPos, yPos, -0.1f);
 
                     _spriteObjectArrWallBottom[yCoord, xCoord].transform.parent = _objectMazeWallsContainer.transform;
                 }
@@ -198,7 +179,7 @@ public class MazeController : MonoBehaviour
                     _spriteRendererArrWallTop[yCoord, xCoord] = _spriteObjectArrWallTop[yCoord, xCoord].AddComponent<SpriteRenderer>();
                     _spriteRendererArrWallTop[yCoord, xCoord].sprite = _spriteWallTop;
                     _spriteRendererArrWallTop[yCoord, xCoord].transform.parent = _spriteObjectArrWallTop[yCoord, xCoord].transform;
-                    _spriteObjectArrWallTop[yCoord, xCoord].transform.position = new Vector2(xPos, yPos);
+                    _spriteObjectArrWallTop[yCoord, xCoord].transform.position = new Vector3(xPos, yPos, -0.1f);
 
                     _spriteObjectArrWallTop[yCoord, xCoord].transform.parent = _objectMazeWallsContainer.transform;
                 }
@@ -208,7 +189,7 @@ public class MazeController : MonoBehaviour
                     _spriteRendererArrWallLeft[yCoord, xCoord] = _spriteObjectArrWallLeft[yCoord, xCoord].AddComponent<SpriteRenderer>();
                     _spriteRendererArrWallLeft[yCoord, xCoord].sprite = _spriteWallLeft;
                     _spriteRendererArrWallLeft[yCoord, xCoord].transform.parent = _spriteObjectArrWallLeft[yCoord, xCoord].transform;
-                    _spriteObjectArrWallLeft[yCoord, xCoord].transform.position = new Vector2(xPos, yPos);
+                    _spriteObjectArrWallLeft[yCoord, xCoord].transform.position = new Vector3(xPos, yPos, -0.1f);
 
                     _spriteObjectArrWallLeft[yCoord, xCoord].transform.parent = _objectMazeWallsContainer.transform;
                 }
@@ -218,7 +199,7 @@ public class MazeController : MonoBehaviour
                     _spriteRendererArrWallRight[yCoord, xCoord] = _spriteObjectArrWallRight[yCoord, xCoord].AddComponent<SpriteRenderer>();
                     _spriteRendererArrWallRight[yCoord, xCoord].sprite = _spriteWallRight;
                     _spriteRendererArrWallRight[yCoord, xCoord].transform.parent = _spriteObjectArrWallRight[yCoord, xCoord].transform;
-                    _spriteObjectArrWallRight[yCoord, xCoord].transform.position = new Vector2(xPos, yPos);
+                    _spriteObjectArrWallRight[yCoord, xCoord].transform.position = new Vector3(xPos, yPos, -0.1f);
 
                     _spriteObjectArrWallRight[yCoord, xCoord].transform.parent = _objectMazeWallsContainer.transform;
                 }

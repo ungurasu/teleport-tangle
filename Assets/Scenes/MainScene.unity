@@ -152,6 +152,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aaf036c45e9e6014f8865a49f053eea2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _mazeSize: 20
   _spriteMazeTile: {fileID: 21300000, guid: 8707ae66ed9e0e541a3f0367a4f59165, type: 3}
   _spriteWallLeft: {fileID: 21300000, guid: 3390f3402e4c3494da36766cfb0477b0, type: 3}
   _spriteWallBottom: {fileID: 21300000, guid: b963b7aa8d14db746a0efcaa110c5574, type: 3}
