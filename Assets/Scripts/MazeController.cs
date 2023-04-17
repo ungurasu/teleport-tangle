@@ -14,6 +14,14 @@ public struct Point
     }
 }
 
+enum Direction: int
+{
+    Bottom  = 0,
+    Left    = 1,
+    Top     = 2,
+    Right   = 3
+}
+
 public class MazeController : MonoBehaviour
 {
 
@@ -22,14 +30,8 @@ public class MazeController : MonoBehaviour
     int[,] _maze = new int[2002 ,2002];
     GameObject[,] _spriteObjectArrMaze             = new GameObject[1001, 1001];
     SpriteRenderer[,] _spriteRendererArrMaze       = new SpriteRenderer[1001, 1001];
-    GameObject[,] _spriteObjectArrWallLeft         = new GameObject[1001, 1001];
-    GameObject[,] _spriteObjectArrWallBottom       = new GameObject[1001, 1001];
-    GameObject[,] _spriteObjectArrWallRight        = new GameObject[1001, 1001];
-    GameObject[,] _spriteObjectArrWallTop          = new GameObject[1001, 1001];
-    SpriteRenderer[,] _spriteRendererArrWallLeft   = new SpriteRenderer[1001, 1001];
-    SpriteRenderer[,] _spriteRendererArrWallBottom = new SpriteRenderer[1001, 1001];
-    SpriteRenderer[,] _spriteRendererArrWallRight  = new SpriteRenderer[1001, 1001];
-    SpriteRenderer[,] _spriteRendererArrWallTop    = new SpriteRenderer[1001, 1001];
+    GameObject[,,] _spriteObjectArrWall            = new GameObject[1001, 1001, 4];
+    SpriteRenderer[,,] _spriteRendererArrWall      = new SpriteRenderer[1001, 1001, 4];
     [SerializeField] Sprite _spriteMazeTile;
     [SerializeField] Sprite _spriteWallLeft;
     [SerializeField] Sprite _spriteWallBottom;
@@ -37,6 +39,50 @@ public class MazeController : MonoBehaviour
     [SerializeField] Sprite _spriteWallTop;
     GameObject _objectMazeTilesContainer;
     GameObject _objectMazeWallsContainer;
+
+    void drawWall(int xCoord, int yCoord, Direction direction)
+    {
+        string objectName;
+        Sprite sprite;
+        float xPos = xCoord - 1;
+        float yPos = yCoord - 1;
+
+        switch (direction)
+        {
+            case Direction.Bottom:
+                objectName = string.Format("WallBottomX{0}Y{1}", xCoord, yCoord);
+                sprite = _spriteWallBottom;
+                break;
+
+            case Direction.Left:
+                objectName = string.Format("WallLeftX{0}Y{1}", xCoord, yCoord);
+                sprite = _spriteWallLeft;
+                break;
+
+            case Direction.Top:
+                objectName = string.Format("WallTopX{0}Y{1}", xCoord, yCoord);
+                sprite = _spriteWallTop;
+                break;
+
+            case Direction.Right:
+                objectName = string.Format("WallRightX{0}Y{1}", xCoord, yCoord);
+                sprite = _spriteWallRight;
+                break;
+            
+            default:
+                objectName = "Broken.";
+                sprite = _spriteWallBottom;
+                break;
+        }
+
+        _spriteObjectArrWall[yCoord, xCoord, (int)direction]                     = new GameObject(objectName);
+        _spriteRendererArrWall[yCoord, xCoord, (int)direction]                   = _spriteObjectArrWall[yCoord, xCoord, (int)direction].AddComponent<SpriteRenderer>();
+        _spriteRendererArrWall[yCoord, xCoord, (int)direction].sprite            = sprite;
+        _spriteRendererArrWall[yCoord, xCoord, (int)direction].transform.parent  = _spriteObjectArrWall[yCoord, xCoord, (int)direction].transform;
+        _spriteObjectArrWall[yCoord, xCoord, (int)direction].transform.position  = new Vector3(xPos, yPos, -0.1f);
+
+        _spriteObjectArrWall[yCoord, xCoord, (int)direction].transform.parent    = _objectMazeWallsContainer.transform;
+    }
 
     void PartitionMaze() {
         bool[,] visited = new bool[1001, 1001];
@@ -54,10 +100,14 @@ public class MazeController : MonoBehaviour
             }
         }
 
-        visited[1, 1] = true;
-        wallsList[0] = new Point(2, 3);
-        wallsList[1] = new Point(3, 2);
-        wallsListLenght = 2;
+        xCoord = Random.Range(1, _mazeSize + 1);
+        yCoord = Random.Range(1, _mazeSize + 1);
+        visited[yCoord, xCoord] = true;
+        wallsList[0] = new Point(xCoord * 2 - 1, yCoord * 2);
+        wallsList[1] = new Point(xCoord * 2 + 1, yCoord * 2);
+        wallsList[2] = new Point(xCoord * 2, yCoord * 2 - 1);
+        wallsList[3] = new Point(xCoord * 2, yCoord * 2 + 1);
+        wallsListLenght = 4;
 
         while (wallsListLenght> 0)
         {
@@ -73,46 +123,49 @@ public class MazeController : MonoBehaviour
             wallsList = wallsListTemp;
             wallsListLenght--;
 
-            if (currentWall.x % 2 == 1 && currentWall.x > 1 && currentWall.x < _mazeSize * 2 + 1) // vertical wall
+            if (1 <= currentWall.x && currentWall.x <= _mazeSize * 2 && 1 <= currentWall.y && currentWall.y <= _mazeSize * 2 )
             {
-                if (visited[currentWall.y / 2, (currentWall.x - 1) / 2] == false && visited[currentWall.y / 2, (currentWall.x + 1) / 2] == true) // left cell
+                if (currentWall.x % 2 == 1) // vertical wall
                 {
-                    visited[currentWall.y / 2, (currentWall.x - 1) / 2] = true;
-                    _maze[currentWall.y, currentWall.x] = 0;
-                    wallsList[wallsListLenght] = new Point(currentWall.x - 1, currentWall.y + 1); // above wall
-                    wallsList[wallsListLenght + 1] = new Point(currentWall.x - 1, currentWall.y - 1); // bottom wall
-                    wallsList[wallsListLenght + 2] = new Point(currentWall.x - 2, currentWall.y); // left wall
-                    wallsListLenght += 3;
+                    if (visited[currentWall.y / 2, (currentWall.x - 1) / 2] == false && visited[currentWall.y / 2, (currentWall.x + 1) / 2] == true) // left cell
+                    {
+                        visited[currentWall.y / 2, (currentWall.x - 1) / 2] = true;
+                        _maze[currentWall.y, currentWall.x] = 0;
+                        wallsList[wallsListLenght] = new Point(currentWall.x - 1, currentWall.y + 1); // above wall
+                        wallsList[wallsListLenght + 1] = new Point(currentWall.x - 1, currentWall.y - 1); // bottom wall
+                        wallsList[wallsListLenght + 2] = new Point(currentWall.x - 2, currentWall.y); // left wall
+                        wallsListLenght += 3;
+                    }
+                    else if (visited[currentWall.y / 2, (currentWall.x - 1) / 2] == true && visited[currentWall.y / 2, (currentWall.x + 1) / 2] == false) // right cell
+                    {
+                        visited[currentWall.y / 2, (currentWall.x + 1) / 2] = true;
+                        _maze[currentWall.y, currentWall.x] = 0;
+                        wallsList[wallsListLenght] = new Point(currentWall.x + 1, currentWall.y + 1); // above wall
+                        wallsList[wallsListLenght + 1] = new Point(currentWall.x + 1, currentWall.y - 1); // bottom wall
+                        wallsList[wallsListLenght + 2] = new Point(currentWall.x + 2, currentWall.y); // right wall
+                        wallsListLenght += 3;
+                    }
                 }
-                else if (visited[currentWall.y / 2, (currentWall.x - 1) / 2] == true && visited[currentWall.y / 2, (currentWall.x + 1) / 2] == false) // right cell
+                else if (currentWall.y % 2 == 1)// horizontal wall
                 {
-                    visited[currentWall.y / 2, (currentWall.x + 1) / 2] = true;
-                    _maze[currentWall.y, currentWall.x] = 0;
-                    wallsList[wallsListLenght] = new Point(currentWall.x + 1, currentWall.y + 1); // above wall
-                    wallsList[wallsListLenght + 1] = new Point(currentWall.x + 1, currentWall.y - 1); // bottom wall
-                    wallsList[wallsListLenght + 2] = new Point(currentWall.x + 2, currentWall.y); // right wall
-                    wallsListLenght += 3;
-                }
-            }
-            else if (currentWall.y % 2 == 1 && currentWall.y > 1 && currentWall.y < _mazeSize * 2 + 1)// horizontal wall
-            {
-                if (visited[(currentWall.y - 1) / 2, currentWall.x / 2] == false && visited[(currentWall.y + 1) / 2, currentWall.x / 2] == true) // bottom cell
-                {
-                    visited[(currentWall.y - 1)/ 2, currentWall.x / 2] = true;
-                    _maze[currentWall.y, currentWall.x] = 0;
-                    wallsList[wallsListLenght] = new Point(currentWall.x, currentWall.y - 2); // bottom wall
-                    wallsList[wallsListLenght + 1] = new Point(currentWall.x + 1, currentWall.y - 1); // right wall
-                    wallsList[wallsListLenght + 2] = new Point(currentWall.x - 1, currentWall.y - 1); // left wall
-                    wallsListLenght += 3;
-                }
-                else if (visited[(currentWall.y - 1) / 2, currentWall.x / 2] == true && visited[(currentWall.y + 1) / 2, currentWall.x / 2] == false) // top cell
-                {
-                    visited[(currentWall.y + 1) / 2, currentWall.x / 2] = true;
-                    _maze[currentWall.y, currentWall.x] = 0;
-                    wallsList[wallsListLenght] = new Point(currentWall.x, currentWall.y + 2); // top wall
-                    wallsList[wallsListLenght + 1] = new Point(currentWall.x + 1, currentWall.y + 1); // right wall
-                    wallsList[wallsListLenght + 2] = new Point(currentWall.x - 1, currentWall.y + 1); // left wall
-                    wallsListLenght += 3;
+                    if (visited[(currentWall.y - 1) / 2, currentWall.x / 2] == false && visited[(currentWall.y + 1) / 2, currentWall.x / 2] == true) // bottom cell
+                    {
+                        visited[(currentWall.y - 1) / 2, currentWall.x / 2] = true;
+                        _maze[currentWall.y, currentWall.x] = 0;
+                        wallsList[wallsListLenght] = new Point(currentWall.x, currentWall.y - 2); // bottom wall
+                        wallsList[wallsListLenght + 1] = new Point(currentWall.x + 1, currentWall.y - 1); // right wall
+                        wallsList[wallsListLenght + 2] = new Point(currentWall.x - 1, currentWall.y - 1); // left wall
+                        wallsListLenght += 3;
+                    }
+                    else if (visited[(currentWall.y - 1) / 2, currentWall.x / 2] == true && visited[(currentWall.y + 1) / 2, currentWall.x / 2] == false) // top cell
+                    {
+                        visited[(currentWall.y + 1) / 2, currentWall.x / 2] = true;
+                        _maze[currentWall.y, currentWall.x] = 0;
+                        wallsList[wallsListLenght] = new Point(currentWall.x, currentWall.y + 2); // top wall
+                        wallsList[wallsListLenght + 1] = new Point(currentWall.x + 1, currentWall.y + 1); // right wall
+                        wallsList[wallsListLenght + 2] = new Point(currentWall.x - 1, currentWall.y + 1); // left wall
+                        wallsListLenght += 3;
+                    }
                 }
             }
         }
@@ -165,43 +218,19 @@ public class MazeController : MonoBehaviour
 
                 if (_maze[yCoord * 2 - 1, xCoord * 2] == 1) 
                 {
-                    _spriteObjectArrWallBottom[yCoord, xCoord]                      = new GameObject(string.Format("WallBottomX{0}Y{1}", xCoord, yCoord));
-                    _spriteRendererArrWallBottom[yCoord, xCoord]                    = _spriteObjectArrWallBottom[yCoord, xCoord].AddComponent<SpriteRenderer>();
-                    _spriteRendererArrWallBottom[yCoord, xCoord].sprite             = _spriteWallBottom;
-                    _spriteRendererArrWallBottom[yCoord, xCoord].transform.parent   = _spriteObjectArrWallBottom[yCoord, xCoord].transform;
-                    _spriteObjectArrWallBottom[yCoord, xCoord].transform.position   = new Vector3(xPos, yPos, -0.1f);
-
-                    _spriteObjectArrWallBottom[yCoord, xCoord].transform.parent = _objectMazeWallsContainer.transform;
+                    drawWall(xCoord, yCoord, Direction.Bottom);
                 }
                 if (_maze[yCoord * 2 + 1, xCoord * 2] == 1)
                 {
-                    _spriteObjectArrWallTop[yCoord, xCoord] = new GameObject(string.Format("WallTopX{0}Y{1}", xCoord, yCoord));
-                    _spriteRendererArrWallTop[yCoord, xCoord] = _spriteObjectArrWallTop[yCoord, xCoord].AddComponent<SpriteRenderer>();
-                    _spriteRendererArrWallTop[yCoord, xCoord].sprite = _spriteWallTop;
-                    _spriteRendererArrWallTop[yCoord, xCoord].transform.parent = _spriteObjectArrWallTop[yCoord, xCoord].transform;
-                    _spriteObjectArrWallTop[yCoord, xCoord].transform.position = new Vector3(xPos, yPos, -0.1f);
-
-                    _spriteObjectArrWallTop[yCoord, xCoord].transform.parent = _objectMazeWallsContainer.transform;
+                    drawWall(xCoord, yCoord, Direction.Top);
                 }
                 if (_maze[yCoord * 2, xCoord * 2 - 1] == 1)
                 {
-                    _spriteObjectArrWallLeft[yCoord, xCoord] = new GameObject(string.Format("WallLeftX{0}Y{1}", xCoord, yCoord));
-                    _spriteRendererArrWallLeft[yCoord, xCoord] = _spriteObjectArrWallLeft[yCoord, xCoord].AddComponent<SpriteRenderer>();
-                    _spriteRendererArrWallLeft[yCoord, xCoord].sprite = _spriteWallLeft;
-                    _spriteRendererArrWallLeft[yCoord, xCoord].transform.parent = _spriteObjectArrWallLeft[yCoord, xCoord].transform;
-                    _spriteObjectArrWallLeft[yCoord, xCoord].transform.position = new Vector3(xPos, yPos, -0.1f);
-
-                    _spriteObjectArrWallLeft[yCoord, xCoord].transform.parent = _objectMazeWallsContainer.transform;
+                    drawWall(xCoord, yCoord, Direction.Left);
                 }
                 if (_maze[yCoord * 2, xCoord * 2 + 1] == 1)
                 {
-                    _spriteObjectArrWallRight[yCoord, xCoord] = new GameObject(string.Format("WallRightX{0}Y{1}", xCoord, yCoord));
-                    _spriteRendererArrWallRight[yCoord, xCoord] = _spriteObjectArrWallRight[yCoord, xCoord].AddComponent<SpriteRenderer>();
-                    _spriteRendererArrWallRight[yCoord, xCoord].sprite = _spriteWallRight;
-                    _spriteRendererArrWallRight[yCoord, xCoord].transform.parent = _spriteObjectArrWallRight[yCoord, xCoord].transform;
-                    _spriteObjectArrWallRight[yCoord, xCoord].transform.position = new Vector3(xPos, yPos, -0.1f);
-
-                    _spriteObjectArrWallRight[yCoord, xCoord].transform.parent = _objectMazeWallsContainer.transform;
+                    drawWall(xCoord, yCoord, Direction.Right);
                 }
             }
         }
