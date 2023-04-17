@@ -133,6 +133,7 @@ GameObject:
   m_Component:
   - component: {fileID: 101579686}
   - component: {fileID: 101579685}
+  - component: {fileID: 101579687}
   m_Layer: 0
   m_Name: MainObj
   m_TagString: Untagged
@@ -152,12 +153,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aaf036c45e9e6014f8865a49f053eea2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _isInitialized: 0
   _mazeSize: 20
   _spriteMazeTile: {fileID: 21300000, guid: 8707ae66ed9e0e541a3f0367a4f59165, type: 3}
   _spriteWallLeft: {fileID: 21300000, guid: 3390f3402e4c3494da36766cfb0477b0, type: 3}
+  _spriteWallCorner: {fileID: 21300000, guid: 1f968355386dbca449046066c8d4ebf6, type: 3}
   _spriteWallBottom: {fileID: 21300000, guid: b963b7aa8d14db746a0efcaa110c5574, type: 3}
   _spriteWallRight: {fileID: 21300000, guid: 9be0026cbb073ee4eac0b4712b629aa2, type: 3}
   _spriteWallTop: {fileID: 21300000, guid: 277074bfe6c257f4da3b8e9d8103cf1c, type: 3}
+  _spriteStart: {fileID: 21300000, guid: 16c9fcd80e1bd7c439fefddc31626e2f, type: 3}
+  _spriteEnd: {fileID: 21300000, guid: 2f76d77a3052d3a43a771d1d65f9b810, type: 3}
+  _spriteUnknown: {fileID: 21300000, guid: 93d086b4892c83049aee251e3aa81d8b, type: 3}
 --- !u!4 &101579686
 Transform:
   m_ObjectHideFlags: 0
@@ -173,6 +179,26 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &101579687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101579684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f9a627a67cfa404aacbc9b75d694faf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _spritePlayer:
+  - {fileID: 21300000, guid: 0583dfc4ba8c6454a8d26eab835a8063, type: 3}
+  - {fileID: 21300000, guid: 6846c6277a43c6647a3368f9ffe99e6d, type: 3}
+  - {fileID: 21300000, guid: 17a83e19e11ec9b4ea42f4ceb963f36a, type: 3}
+  - {fileID: 21300000, guid: 82bb1621ab518da409659753aaa4d2a6, type: 3}
+  _spriteMask: {fileID: 21300000, guid: de2dcc2a201791e42a0cc0acf7513fb9, type: 3}
+  _mazeController: {fileID: 101579685}
+  _playerSlideSpeed: 10
 --- !u!1 &451612086
 GameObject:
   m_ObjectHideFlags: 0
@@ -209,7 +235,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
-  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0}
+  m_BackGroundColor: {r: 0.21960786, g: 0.20392159, b: 0.1764706, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -226,7 +252,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 8
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2

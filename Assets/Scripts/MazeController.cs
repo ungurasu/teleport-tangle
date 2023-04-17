@@ -1,44 +1,36 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-public struct Point 
-{
-    public int x;
-    public int y;
-
-    public Point(int initX, int initY)
-    {
-        x = initX;
-        y = initY;
-    }
-}
-
-enum Direction: int
-{
-    Bottom  = 0,
-    Left    = 1,
-    Top     = 2,
-    Right   = 3
-}
+using LocalLibrary;
 
 public class MazeController : MonoBehaviour
 {
-
-    [SerializeField] int _mazeSize = 10;
+    public bool _isInitialized = false;
+    [SerializeField] public int _mazeSize = 10;
     // Start is called before the first frame update
-    int[,] _maze = new int[2002 ,2002];
+    public int[,] _maze = new int[2002 ,2002];
     GameObject[,] _spriteObjectArrMaze             = new GameObject[1001, 1001];
     SpriteRenderer[,] _spriteRendererArrMaze       = new SpriteRenderer[1001, 1001];
     GameObject[,,] _spriteObjectArrWall            = new GameObject[1001, 1001, 4];
     SpriteRenderer[,,] _spriteRendererArrWall      = new SpriteRenderer[1001, 1001, 4];
+    GameObject[,] _spriteObjectMazeObject          = new GameObject[1001, 1001];
+    SpriteRenderer[,] _spriteRendererMazeObject    = new SpriteRenderer[1001, 1001];
+    GameObject[,] _spriteObjectMazeCorner          = new GameObject[1001, 1001];
+    SpriteRenderer[,] _spriteRendererMazeCorner    = new SpriteRenderer[1001, 1001];
     [SerializeField] Sprite _spriteMazeTile;
     [SerializeField] Sprite _spriteWallLeft;
+    [SerializeField] Sprite _spriteWallCorner;
     [SerializeField] Sprite _spriteWallBottom;
     [SerializeField] Sprite _spriteWallRight;
     [SerializeField] Sprite _spriteWallTop;
+    [SerializeField] Sprite _spriteStart;
+    [SerializeField] Sprite _spriteEnd;
+    [SerializeField] Sprite _spriteUnknown;
     GameObject _objectMazeTilesContainer;
     GameObject _objectMazeWallsContainer;
+    GameObject _objectMazeObjectsContainer;
+    public Point _startPoint;
+    public Point _endPoint;
 
     void drawWall(int xCoord, int yCoord, Direction direction)
     {
@@ -70,8 +62,8 @@ public class MazeController : MonoBehaviour
                 break;
             
             default:
-                objectName = "Broken.";
-                sprite = _spriteWallBottom;
+                objectName = "Broken";
+                sprite = _spriteUnknown;
                 break;
         }
 
@@ -82,6 +74,40 @@ public class MazeController : MonoBehaviour
         _spriteObjectArrWall[yCoord, xCoord, (int)direction].transform.position  = new Vector3(xPos, yPos, -0.1f);
 
         _spriteObjectArrWall[yCoord, xCoord, (int)direction].transform.parent    = _objectMazeWallsContainer.transform;
+    }
+
+    void drawObject(int xCoord, int yCoord, MazeObjects mazeObject)
+    {
+        string objectName;
+        Sprite sprite;
+        float xPos = xCoord - 1;
+        float yPos = yCoord - 1;
+
+        switch (mazeObject)
+        {
+            case MazeObjects.Start:
+                objectName = string.Format("StartLabelX{0}Y{1}", xCoord, yCoord);
+                sprite = _spriteStart;
+                break;
+
+            case MazeObjects.End:
+                objectName = string.Format("EndLabelX{0}Y{1}", xCoord, yCoord);
+                sprite = _spriteEnd;
+                break;
+
+            default:
+                objectName = "Broken";
+                sprite = _spriteUnknown;
+                break;
+        }
+
+        _spriteObjectMazeObject[yCoord, xCoord] = new GameObject(objectName);
+        _spriteRendererMazeObject[yCoord, xCoord] = _spriteObjectMazeObject[yCoord, xCoord].AddComponent<SpriteRenderer>();
+        _spriteRendererMazeObject[yCoord, xCoord].sprite = sprite;
+        _spriteRendererMazeObject[yCoord, xCoord].transform.parent = _spriteObjectMazeObject[yCoord, xCoord].transform;
+        _spriteObjectMazeObject[yCoord, xCoord].transform.position = new Vector3(xPos, yPos, -0.2f);
+
+        _spriteObjectMazeObject[yCoord, xCoord].transform.parent = _objectMazeObjectsContainer.transform;
     }
 
     void PartitionMaze() {
@@ -123,7 +149,7 @@ public class MazeController : MonoBehaviour
             wallsList = wallsListTemp;
             wallsListLenght--;
 
-            if (1 <= currentWall.x && currentWall.x <= _mazeSize * 2 && 1 <= currentWall.y && currentWall.y <= _mazeSize * 2 )
+            if (2 <= currentWall.x && currentWall.x <= _mazeSize * 2 && 2 <= currentWall.y && currentWall.y <= _mazeSize * 2 )
             {
                 if (currentWall.x % 2 == 1) // vertical wall
                 {
@@ -171,6 +197,101 @@ public class MazeController : MonoBehaviour
         }
     }
 
+    void PlaceStartEnd()
+    {
+        Direction startDir;
+        Direction endDir;
+
+        startDir = (Direction) Random.Range(0, 5);
+        do
+        {
+            endDir = (Direction)Random.Range(0, 5);
+        } while (endDir == startDir);
+
+        switch (startDir) 
+        {
+            case Direction.Bottom:
+                _startPoint.x = Random.Range(1, _mazeSize + 1);
+                _startPoint.y = 1;
+                break;
+
+            case Direction.Top:
+                _startPoint.x = Random.Range(1, _mazeSize + 1);
+                _startPoint.y = _mazeSize;
+                break;
+
+            case Direction.Left:
+                _startPoint.x = 1;
+                _startPoint.y = Random.Range(1, _mazeSize + 1);
+                break;
+
+            case Direction.Right:
+                _startPoint.x = _mazeSize;
+                _startPoint.y = Random.Range(1, _mazeSize + 1);
+                break;
+
+            default:
+                _startPoint.x = _mazeSize / 2;
+                _startPoint.y = 1;
+                break;
+        }
+
+        switch (endDir)
+        {
+            case Direction.Bottom:
+                _endPoint.y = 1;
+                do
+                {
+                    _endPoint.x = Random.Range(1, _mazeSize + 1);
+                } while (_startPoint - _endPoint < _mazeSize - 1);
+                break;
+
+            case Direction.Top:
+                _endPoint.y = _mazeSize;
+                do
+                {
+                    _endPoint.x = Random.Range(1, _mazeSize + 1);
+                } while (_startPoint - _endPoint < _mazeSize - 1);
+                break;
+
+            case Direction.Left:
+                _endPoint.x = 1;
+                do
+                {
+                    _endPoint.y = Random.Range(1, _mazeSize + 1);
+                } while (_startPoint - _endPoint < _mazeSize - 1);
+                break;
+
+            case Direction.Right:
+                _endPoint.x = _mazeSize;
+                do
+                {
+                    _endPoint.y = Random.Range(1, _mazeSize + 1);
+                } while (_startPoint - _endPoint < _mazeSize - 1);
+                break;
+
+            default:
+                _endPoint.x = _mazeSize / 2;
+                _endPoint.y = _mazeSize;
+                break;
+        }
+
+        _maze[_startPoint.y * 2, _startPoint.x * 2] = (int)MazeObjects.Start;
+        _maze[_endPoint.y * 2, _endPoint.x * 2]     = (int)MazeObjects.End;
+    }
+
+    public bool validateMove(int xCoord, int yCoord)
+    {
+        if (_maze[yCoord, xCoord] == (int)MazeObjects.Floor || _maze[yCoord, xCoord] == (int)MazeObjects.Start || _maze[yCoord, xCoord] == (int)MazeObjects.End)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    
     void Start()
     {
         int xCoord;
@@ -180,6 +301,7 @@ public class MazeController : MonoBehaviour
 
         _objectMazeTilesContainer = new GameObject("MazeTilesContainer");
         _objectMazeWallsContainer = new GameObject("MazeWallsContainer");
+        _objectMazeObjectsContainer = new GameObject("MazeObjectsContainer");
 
         //init maze array
         for (yCoord = 1; yCoord <= _mazeSize*2 + 1; yCoord++)
@@ -200,6 +322,8 @@ public class MazeController : MonoBehaviour
         //partition maze
         PartitionMaze();
 
+        PlaceStartEnd();
+
         //init maze sprites game objects
         for (yCoord = 1; yCoord <= _mazeSize; yCoord++)
         {
@@ -214,7 +338,14 @@ public class MazeController : MonoBehaviour
                 _spriteRendererArrMaze[yCoord, xCoord].transform.parent = _spriteObjectArrMaze[yCoord, xCoord].transform;
                 _spriteObjectArrMaze[yCoord, xCoord].transform.position = new Vector2(xPos, yPos);
 
-                _spriteObjectArrMaze[yCoord, xCoord].transform.parent   = _objectMazeTilesContainer.transform;
+                _spriteObjectMazeCorner[yCoord, xCoord]                    = new GameObject(string.Format("MazeCornerX{0}Y{1}", xCoord, yCoord));
+                _spriteRendererMazeCorner[yCoord, xCoord]                  = _spriteObjectMazeCorner[yCoord, xCoord].AddComponent<SpriteRenderer>();
+                _spriteRendererMazeCorner[yCoord, xCoord].sprite           = _spriteWallCorner;
+                _spriteRendererMazeCorner[yCoord, xCoord].transform.parent = _spriteObjectMazeCorner[yCoord, xCoord].transform;
+                _spriteObjectMazeCorner[yCoord, xCoord].transform.position = new Vector3(xPos, yPos, -0.005f);
+
+                _spriteObjectArrMaze[yCoord, xCoord].transform.parent    = _objectMazeTilesContainer.transform;
+                _spriteObjectMazeCorner[yCoord, xCoord].transform.parent = _objectMazeTilesContainer.transform;
 
                 if (_maze[yCoord * 2 - 1, xCoord * 2] == 1) 
                 {
@@ -232,23 +363,19 @@ public class MazeController : MonoBehaviour
                 {
                     drawWall(xCoord, yCoord, Direction.Right);
                 }
+
+                if (_maze[yCoord * 2, xCoord * 2] > 1)
+                {
+                    drawObject(xCoord, yCoord, (MazeObjects) _maze[yCoord * 2, xCoord * 2]);
+                }
             }
         }
+
+        _isInitialized = true;
     }
 
     // Update is called once per frame
     void Update()
     {
-        int xCoord;
-        int yCoord;
-        float xPos;
-        float yPos;
-
-        for (yCoord = 1; yCoord <= 10; yCoord++)
-        {
-            for (xCoord = 1; xCoord <= 10; xCoord++)
-            {
-            }
-        }
     }
 }
