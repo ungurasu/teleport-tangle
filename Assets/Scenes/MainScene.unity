@@ -154,7 +154,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _isInitialized: 0
-  _mazeSize: 20
+  _mazeSize: 100
   _spriteMazeTile: {fileID: 21300000, guid: 8707ae66ed9e0e541a3f0367a4f59165, type: 3}
   _spriteWallLeft: {fileID: 21300000, guid: 3390f3402e4c3494da36766cfb0477b0, type: 3}
   _spriteWallCorner: {fileID: 21300000, guid: 1f968355386dbca449046066c8d4ebf6, type: 3}
@@ -164,6 +164,8 @@ MonoBehaviour:
   _spriteStart: {fileID: 21300000, guid: 16c9fcd80e1bd7c439fefddc31626e2f, type: 3}
   _spriteEnd: {fileID: 21300000, guid: 2f76d77a3052d3a43a771d1d65f9b810, type: 3}
   _spriteTangle: {fileID: 21300000, guid: 36e1cc6cdf3ef884694c52c817b92cee, type: 3}
+  _spriteEnemy: {fileID: 21300000, guid: ba8ac66fcdf00b64286bfda1db8e6b40, type: 3}
+  _spriteObstacle: {fileID: 21300000, guid: 37c4a9d8f2072a543a2a9f327b87538e, type: 3}
   _spriteUnknown: {fileID: 21300000, guid: 93d086b4892c83049aee251e3aa81d8b, type: 3}
 --- !u!4 &101579686
 Transform:

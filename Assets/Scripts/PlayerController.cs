@@ -254,15 +254,15 @@ public class PlayerController : MonoBehaviour
     {
         if (_mazeController.validateMove((x + 1) * 2, (y + 1) * 2))
         {
-            _mazeController.placeTangle(_playerCoords.x - 1, _playerCoords.y - 1);
-            _mazeController.placeTangle(_playerCoords.x, _playerCoords.y - 1);
-            _mazeController.placeTangle(_playerCoords.x + 1, _playerCoords.y - 1);
-            _mazeController.placeTangle(_playerCoords.x - 1, _playerCoords.y);
-            _mazeController.placeTangle(_playerCoords.x, _playerCoords.y);
-            _mazeController.placeTangle(_playerCoords.x + 1, _playerCoords.y);
-            _mazeController.placeTangle(_playerCoords.x - 1, _playerCoords.y + 1);
-            _mazeController.placeTangle(_playerCoords.x, _playerCoords.y + 1);
-            _mazeController.placeTangle(_playerCoords.x + 1, _playerCoords.y + 1);
+            _mazeController.PlaceTangle(_playerCoords.x - 1, _playerCoords.y - 1);
+            _mazeController.PlaceTangle(_playerCoords.x, _playerCoords.y - 1);
+            _mazeController.PlaceTangle(_playerCoords.x + 1, _playerCoords.y - 1);
+            _mazeController.PlaceTangle(_playerCoords.x - 1, _playerCoords.y);
+            _mazeController.PlaceTangle(_playerCoords.x, _playerCoords.y);
+            _mazeController.PlaceTangle(_playerCoords.x + 1, _playerCoords.y);
+            _mazeController.PlaceTangle(_playerCoords.x - 1, _playerCoords.y + 1);
+            _mazeController.PlaceTangle(_playerCoords.x, _playerCoords.y + 1);
+            _mazeController.PlaceTangle(_playerCoords.x + 1, _playerCoords.y + 1);
             
             placePlayerAt( x, y, direction);
         }

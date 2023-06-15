@@ -26,6 +26,8 @@ public class MazeController : MonoBehaviour
     [SerializeField] Sprite _spriteStart;
     [SerializeField] Sprite _spriteEnd;
     [SerializeField] Sprite _spriteTangle;
+    [SerializeField] Sprite _spriteEnemy;
+    [SerializeField] Sprite _spriteObstacle;
     [SerializeField] Sprite _spriteUnknown;
     GameObject _objectMazeTilesContainer;
     GameObject _objectMazeWallsContainer;
@@ -99,6 +101,16 @@ public class MazeController : MonoBehaviour
             case MazeObjects.Tangle:
                 objectName = string.Format("TangleX{0}Y{1}", xCoord, yCoord);
                 sprite = _spriteTangle;
+                break;
+            
+            case MazeObjects.Enemy:
+                objectName = string.Format("EnemyX{0}Y{1}", xCoord, yCoord);
+                sprite = _spriteEnemy;
+                break;
+            
+            case MazeObjects.Obstacle:
+                objectName = string.Format("ObstacleX{0}Y{1}", xCoord, yCoord);
+                sprite = _spriteObstacle;
                 break;
 
             default:
@@ -286,9 +298,39 @@ public class MazeController : MonoBehaviour
         _maze[_endPoint.y * 2, _endPoint.x * 2]     = (int)MazeObjects.End;
     }
 
-    public bool placeTangle(int xCoord, int yCoord)
+    void PlaceEnemiesObstacles()
     {
-        if (0 <= xCoord && xCoord < _mazeSize && 0 <= yCoord && yCoord < _mazeSize)
+        int xCoord;
+        int yCoord;
+        int noEnemies = _mazeSize * _mazeSize / 100;
+        int noObstacles = _mazeSize * _mazeSize / 100;
+        
+        for (int i = 1; i <= noEnemies; i++)
+        {
+            do
+            {
+                xCoord = Random.Range(0, _mazeSize - 1);
+                yCoord = Random.Range(0, _mazeSize - 1);
+            } while (_maze[(yCoord + 1) * 2, (xCoord + 1) * 2] != (int) MazeObjects.Floor);
+
+            _maze[(yCoord + 1) * 2, (xCoord + 1) * 2] = (int)MazeObjects.Enemy;
+        }
+        
+        for (int i = 1; i <= noObstacles; i++)
+        {
+            do
+            {
+                xCoord = Random.Range(0, _mazeSize - 1);
+                yCoord = Random.Range(0, _mazeSize - 1);
+            } while (_maze[(yCoord + 1) * 2, (xCoord + 1) * 2] != (int) MazeObjects.Floor);
+
+            _maze[(yCoord + 1) * 2, (xCoord + 1) * 2] = (int)MazeObjects.Obstacle;
+        }
+    }
+
+    public bool PlaceTangle(int xCoord, int yCoord)
+    {
+        if (0 <= xCoord && xCoord < _mazeSize && 0 <= yCoord && yCoord < _mazeSize && _maze[(yCoord + 1) * 2, (xCoord + 1) * 2] == (int) MazeObjects.Floor)
         {
             _maze[(yCoord + 1) * 2, (xCoord + 1) * 2] = (int)MazeObjects.Tangle;
             drawObject(xCoord + 1, yCoord + 1, MazeObjects.Tangle);
@@ -341,6 +383,8 @@ public class MazeController : MonoBehaviour
         PartitionMaze();
 
         PlaceStartEnd();
+        
+        PlaceEnemiesObstacles();
 
         //init maze sprites game objects
         for (yCoord = 1; yCoord <= _mazeSize; yCoord++)
