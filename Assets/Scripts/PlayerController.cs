@@ -71,13 +71,8 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void placePlayerAt(int xCoord, int yCoord, Direction direction)
+    void updateArrows()
     {
-        _playerCoords.x = xCoord;
-        _playerCoords.y = yCoord;
-        _playerObject.transform.position = new Vector3(_playerCoords.x, _playerCoords.y, -0.3f);
-        _maskObject.transform.position = new Vector3(_playerCoords.x + 0.5f, _playerCoords.y + 0.5f, -0.4f);
-        _camera.transform.position = new Vector3(_playerCoords.x + 0.5f, _playerCoords.y + 0.5f, -10f);
 
         for (int i = 0; i <= 3; i++)
         {
@@ -86,7 +81,7 @@ public class PlayerController : MonoBehaviour
             switch ((Direction)i)
             {
                 case Direction.Bottom:
-                    if (_playerCoords.y < 2)
+                    if (_playerCoords.y < 2 || !_mazeController.validateMove((_playerCoords.x + 1) * 2, (_playerCoords.y + 1) * 2 - 4))
                     {
                         z_coord = 1;
                         _arrowColliders[i].enabled = false;
@@ -100,7 +95,7 @@ public class PlayerController : MonoBehaviour
                     break;
                     
                 case Direction.Left:
-                    if (_playerCoords.x < 2)
+                    if (_playerCoords.x < 2 || !_mazeController.validateMove((_playerCoords.x + 1) * 2 - 4, (_playerCoords.y + 1) * 2))
                     {
                         z_coord = 1;
                         _arrowColliders[i].enabled = false;
@@ -114,7 +109,7 @@ public class PlayerController : MonoBehaviour
                     break;
                     
                 case Direction.Top:
-                    if (_playerCoords.y > _mazeController._mazeSize - 3)
+                    if (_playerCoords.y > _mazeController._mazeSize - 3 || !_mazeController.validateMove((_playerCoords.x + 1) * 2, (_playerCoords.y + 1) * 2 + 4))
                     {
                         z_coord = 1;
                         _arrowColliders[i].enabled = false;
@@ -128,7 +123,7 @@ public class PlayerController : MonoBehaviour
                     break;
                     
                 case Direction.Right:
-                    if (_playerCoords.x > _mazeController._mazeSize - 3)
+                    if (_playerCoords.x > _mazeController._mazeSize - 3 || !_mazeController.validateMove((_playerCoords.x + 1) * 2 + 4, (_playerCoords.y + 1) * 2))
                     {
                         z_coord = 1;
                         _arrowColliders[i].enabled = false;
@@ -144,7 +139,18 @@ public class PlayerController : MonoBehaviour
 
             _arrowObjects[i].transform.position = new Vector3(_playerCoords.x, _playerCoords.y, z_coord) + _arrowOffsets[i];
         }
+    }
 
+    void placePlayerAt(int xCoord, int yCoord, Direction direction)
+    {
+        _playerCoords.x = xCoord;
+        _playerCoords.y = yCoord;
+        _playerObject.transform.position = new Vector3(_playerCoords.x, _playerCoords.y, -0.3f);
+        _maskObject.transform.position = new Vector3(_playerCoords.x + 0.5f, _playerCoords.y + 0.5f, -0.4f);
+        _camera.transform.position = new Vector3(_playerCoords.x + 0.5f, _playerCoords.y + 0.5f, -10f);
+        
+        updateArrows();
+        
         _playerRenderer.sprite = _spritePlayer[(int)direction];
     }
 
@@ -194,7 +200,9 @@ public class PlayerController : MonoBehaviour
         switch (direction)
         {
             case Direction.Bottom:
-                if (_mazeController.validateMove((_playerCoords.x + 1) * 2, (_playerCoords.y + 1) * 2 - 1))
+                if (_mazeController.validateMove((_playerCoords.x + 1) * 2, (_playerCoords.y + 1) * 2 - 1) &&
+                    _mazeController.validateMove((_playerCoords.x + 1) * 2, (_playerCoords.y + 1) * 2 - 2)
+                    )
                 {
                     _targetPos = _playerObject.transform.position + new Vector3(0f, -1f, 0f);
                     acceptedMove = true;
@@ -202,7 +210,9 @@ public class PlayerController : MonoBehaviour
                 break;
 
             case Direction.Top:
-                if (_mazeController.validateMove((_playerCoords.x + 1) * 2, (_playerCoords.y + 1) * 2 + 1))
+                if (_mazeController.validateMove((_playerCoords.x + 1) * 2, (_playerCoords.y + 1) * 2 + 1) &&
+                    _mazeController.validateMove((_playerCoords.x + 1) * 2, (_playerCoords.y + 1) * 2 + 2)
+                    )
                 {
                     _targetPos = _playerObject.transform.position + new Vector3(0f, 1f, 0f);
                     acceptedMove = true;
@@ -210,7 +220,9 @@ public class PlayerController : MonoBehaviour
                 break;
 
             case Direction.Left:
-                if (_mazeController.validateMove((_playerCoords.x + 1) * 2 - 1, (_playerCoords.y + 1) * 2))
+                if (_mazeController.validateMove((_playerCoords.x + 1) * 2 - 1, (_playerCoords.y + 1) * 2) &&
+                    _mazeController.validateMove((_playerCoords.x + 1) * 2 - 2, (_playerCoords.y + 1) * 2)
+                    )
                 {
                     _targetPos = _playerObject.transform.position + new Vector3(-1f, 0f, 0f);
                     acceptedMove = true;
@@ -218,7 +230,8 @@ public class PlayerController : MonoBehaviour
                 break;
 
             case Direction.Right:
-                if (_mazeController.validateMove((_playerCoords.x + 1) * 2 + 1, (_playerCoords.y + 1) * 2))
+                if (_mazeController.validateMove((_playerCoords.x + 1) * 2 + 1, (_playerCoords.y + 1) * 2) &&
+                    _mazeController.validateMove((_playerCoords.x + 1) * 2 + 2, (_playerCoords.y + 1) * 2))
                 {
                     _targetPos = _playerObject.transform.position + new Vector3(1f, 0f, 0f);
                     acceptedMove = true;
@@ -237,6 +250,24 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    void teleportPlayer(int x, int y, Direction direction)
+    {
+        if (_mazeController.validateMove((x + 1) * 2, (y + 1) * 2))
+        {
+            _mazeController.placeTangle(_playerCoords.x - 1, _playerCoords.y - 1);
+            _mazeController.placeTangle(_playerCoords.x, _playerCoords.y - 1);
+            _mazeController.placeTangle(_playerCoords.x + 1, _playerCoords.y - 1);
+            _mazeController.placeTangle(_playerCoords.x - 1, _playerCoords.y);
+            _mazeController.placeTangle(_playerCoords.x, _playerCoords.y);
+            _mazeController.placeTangle(_playerCoords.x + 1, _playerCoords.y);
+            _mazeController.placeTangle(_playerCoords.x - 1, _playerCoords.y + 1);
+            _mazeController.placeTangle(_playerCoords.x, _playerCoords.y + 1);
+            _mazeController.placeTangle(_playerCoords.x + 1, _playerCoords.y + 1);
+            
+            placePlayerAt( x, y, direction);
+        }
+    }
+
     Direction detectSwipe()
     {
         Vector2 swipeDirection;
@@ -247,7 +278,7 @@ public class PlayerController : MonoBehaviour
             _swipeDelta = Vector2.zero;
         }
 
-        if (Input.GetTouch(0).phase == TouchPhase.Moved)
+        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Moved)
         {
             _swipeDelta += Input.GetTouch(0).deltaPosition;
         }
@@ -267,12 +298,10 @@ public class PlayerController : MonoBehaviour
             {
                 if (swipeDirection.x > 0)
                 {
-                    Debug.Log("Right");
                     return Direction.Right;
                 }
                 else
                 {
-                    Debug.Log("Left");
                     return Direction.Left;
                 }
             }
@@ -280,12 +309,10 @@ public class PlayerController : MonoBehaviour
             {
                 if (swipeDirection.y > 0)
                 {
-                    Debug.Log("Top");
                     return Direction.Top;
                 }
                 else
                 {
-                    Debug.Log("Bottom");
                     return Direction.Bottom;
                 }
             }
@@ -300,11 +327,26 @@ public class PlayerController : MonoBehaviour
     {
         if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Ended && _swipeDelta == Vector2.zero)
         {
-            Ray raycast = Camera.main.ScreenPointToRay(Input.GetTouch(0).position);
-            RaycastHit raycastHit;
-            if (Physics.Raycast(raycast, out raycastHit))
+            Vector2 raycast = Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position);
+            RaycastHit2D raycastHit = Physics2D.Raycast(raycast, Vector2.zero);
+            if (raycastHit)
             {
-                print(raycastHit.collider.name);
+                if (raycastHit.collider.name == "ArrowTop")
+                {
+                    teleportPlayer(_playerCoords.x, _playerCoords.y + 2, Direction.Top);
+                }
+                else if (raycastHit.collider.name == "ArrowLeft")
+                {
+                    teleportPlayer(_playerCoords.x - 2, _playerCoords.y, Direction.Left);
+                }
+                else if (raycastHit.collider.name == "ArrowBottom")
+                {
+                    teleportPlayer(_playerCoords.x, _playerCoords.y - 2, Direction.Bottom);
+                }
+                else if (raycastHit.collider.name == "ArrowRight")
+                {
+                    teleportPlayer(_playerCoords.x + 2, _playerCoords.y, Direction.Right);
+                }
             }
         }
     }
@@ -342,7 +384,22 @@ public class PlayerController : MonoBehaviour
             RaycastHit2D raycastHit = Physics2D.Raycast(raycast, Vector2.zero);
             if (raycastHit)
             {
-                print(raycastHit.collider.name);
+                if (raycastHit.collider.name == "ArrowTop")
+                {
+                    teleportPlayer(_playerCoords.x, _playerCoords.y + 2, Direction.Top);
+                }
+                else if (raycastHit.collider.name == "ArrowLeft")
+                {
+                    teleportPlayer(_playerCoords.x - 2, _playerCoords.y, Direction.Left);
+                }
+                else if (raycastHit.collider.name == "ArrowBottom")
+                {
+                    teleportPlayer(_playerCoords.x, _playerCoords.y - 2, Direction.Bottom);
+                }
+                else if (raycastHit.collider.name == "ArrowRight")
+                {
+                    teleportPlayer(_playerCoords.x + 2, _playerCoords.y, Direction.Right);
+                }
             }
         }
     }

@@ -95,6 +95,11 @@ public class MazeController : MonoBehaviour
                 objectName = string.Format("EndLabelX{0}Y{1}", xCoord, yCoord);
                 sprite = _spriteEnd;
                 break;
+            
+            case MazeObjects.Tangle:
+                objectName = string.Format("TangleX{0}Y{1}", xCoord, yCoord);
+                sprite = _spriteTangle;
+                break;
 
             default:
                 objectName = "Broken";
@@ -279,6 +284,18 @@ public class MazeController : MonoBehaviour
 
         _maze[_startPoint.y * 2, _startPoint.x * 2] = (int)MazeObjects.Start;
         _maze[_endPoint.y * 2, _endPoint.x * 2]     = (int)MazeObjects.End;
+    }
+
+    public bool placeTangle(int xCoord, int yCoord)
+    {
+        if (0 <= xCoord && xCoord < _mazeSize && 0 <= yCoord && yCoord < _mazeSize)
+        {
+            _maze[(yCoord + 1) * 2, (xCoord + 1) * 2] = (int)MazeObjects.Tangle;
+            drawObject(xCoord + 1, yCoord + 1, MazeObjects.Tangle);
+            return true;
+        }
+        
+        return false;
     }
 
     public bool validateMove(int xCoord, int yCoord)
