@@ -1,7 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Xml.Linq;
 using UnityEngine;
 using LocalLibrary;
+using Unity.VisualScripting;
+using UnityEngine.UIElements;
 
 public class PlayerController : MonoBehaviour
 {
@@ -10,14 +14,34 @@ public class PlayerController : MonoBehaviour
     GameObject _playerObject;
     GameObject _camera;
     GameObject _maskObject;
+    GameObject _arrowBottomObject;
+    GameObject _arrowLeftObject;
+    GameObject _arrowTopObject;
+    GameObject _arrowRightObject;
+    GameObject[] _arrowObjects = new GameObject[4];
+    BoxCollider2D[] _arrowColliders = new BoxCollider2D[4];
     SpriteRenderer _playerRenderer;
     SpriteRenderer _maskRenderer;
+    SpriteRenderer _arrowBottomRenderer;
+    SpriteRenderer _arrowLeftRenderer;
+    SpriteRenderer _arrowTopRenderer;
+    SpriteRenderer _arrowRightRenderer;
+    SpriteRenderer[] _arrowRenderers = new SpriteRenderer[4];
     [SerializeField] Sprite[] _spritePlayer = new Sprite[4];
     [SerializeField] Sprite _spriteMask;
+    [SerializeField] Sprite[] _spriteArrow = new Sprite[4];
     [SerializeField] MazeController _mazeController;
     Vector2 _swipeStartPos;
     Vector2 _swipeEndPos;
+    Vector2 _swipeDelta;
     Vector3 _targetPos;
+    private Vector3[] _arrowOffsets =
+    {
+        new Vector3(0, -3f, 0),
+        new Vector3(-3f, 0, 0),
+        new Vector3(0, 3f, 0),
+        new Vector3(3f, 0 , 0)
+    };
     [SerializeField] float _playerSlideSpeed = 10f;
     float _targetDistance;
     Direction _targetDirection;
@@ -36,15 +60,90 @@ public class PlayerController : MonoBehaviour
         _maskRenderer.sprite = _spriteMask;
         _maskRenderer.transform.parent = _maskObject.transform;
         _maskObject.transform.position = new Vector3(_playerCoords.x, _playerCoords.y, -0.4f);
+        
+        for (int i = 0; i <= 3; i++)
+        {
+            _arrowObjects[i] = new GameObject($"Arrow{(Direction)i}");
+            _arrowRenderers[i] = _arrowObjects[i].AddComponent<SpriteRenderer>();
+            _arrowRenderers[i].sprite = _spriteArrow[i];
+            _arrowObjects[i].transform.position = new Vector3(_playerCoords.x, _playerCoords.y, -0.5f) + _arrowOffsets[i];
+            _arrowColliders[i] = _arrowObjects[i].AddComponent<BoxCollider2D>();
+        }
     }
 
-    void movePlayer(int xCoord, int yCoord, Direction direction)
+    void placePlayerAt(int xCoord, int yCoord, Direction direction)
     {
         _playerCoords.x = xCoord;
         _playerCoords.y = yCoord;
         _playerObject.transform.position = new Vector3(_playerCoords.x, _playerCoords.y, -0.3f);
         _maskObject.transform.position = new Vector3(_playerCoords.x + 0.5f, _playerCoords.y + 0.5f, -0.4f);
         _camera.transform.position = new Vector3(_playerCoords.x + 0.5f, _playerCoords.y + 0.5f, -10f);
+
+        for (int i = 0; i <= 3; i++)
+        {
+            float z_coord = -0.5f;
+            
+            switch ((Direction)i)
+            {
+                case Direction.Bottom:
+                    if (_playerCoords.y < 2)
+                    {
+                        z_coord = 1;
+                        _arrowColliders[i].enabled = false;
+                    }
+                    else
+                    {
+                        z_coord = -0.5f;
+                        _arrowColliders[i].enabled = true;
+                    }
+
+                    break;
+                    
+                case Direction.Left:
+                    if (_playerCoords.x < 2)
+                    {
+                        z_coord = 1;
+                        _arrowColliders[i].enabled = false;
+                    }
+                    else
+                    {
+                        z_coord = -0.5f;
+                        _arrowColliders[i].enabled = true;
+                    }
+
+                    break;
+                    
+                case Direction.Top:
+                    if (_playerCoords.y > _mazeController._mazeSize - 3)
+                    {
+                        z_coord = 1;
+                        _arrowColliders[i].enabled = false;
+                    }
+                    else
+                    {
+                        z_coord = -0.5f;
+                        _arrowColliders[i].enabled = true;
+                    }
+
+                    break;
+                    
+                case Direction.Right:
+                    if (_playerCoords.x > _mazeController._mazeSize - 3)
+                    {
+                        z_coord = 1;
+                        _arrowColliders[i].enabled = false;
+                    }
+                    else
+                    {
+                        z_coord = -0.5f;
+                        _arrowColliders[i].enabled = true;
+                    }
+
+                    break;
+            }
+
+            _arrowObjects[i].transform.position = new Vector3(_playerCoords.x, _playerCoords.y, z_coord) + _arrowOffsets[i];
+        }
 
         _playerRenderer.sprite = _spritePlayer[(int)direction];
     }
@@ -56,29 +155,34 @@ public class PlayerController : MonoBehaviour
         switch (direction)
         {
             case Direction.Top:
-                moveVector = new Vector2(0f, 1f) * speed * Time.deltaTime;
+                moveVector = new Vector2(0f, 1f) * (speed * Time.deltaTime);
                 break;
 
             case Direction.Bottom:
-                moveVector = new Vector2(0f, -1f) * speed * Time.deltaTime;
+                moveVector = new Vector2(0f, -1f) * (speed * Time.deltaTime);
                 break;
 
             case Direction.Left:
-                moveVector = new Vector2(-1f, 0f) * speed * Time.deltaTime;
+                moveVector = new Vector2(-1f, 0f) * (speed * Time.deltaTime);
                 break;
 
             case Direction.Right:
-                moveVector = new Vector2(1f, 0f) * speed * Time.deltaTime;
+                moveVector = new Vector2(1f, 0f) * (speed * Time.deltaTime);
                 break;
 
             default:
-                moveVector = new Vector2(0f, 0f) * speed * Time.deltaTime;
+                moveVector = new Vector2(0f, 0f) * (speed * Time.deltaTime);
                 break;
         }
 
-        _playerObject.transform.position += new Vector3(moveVector.x, moveVector.y, 0);
-        _maskObject.transform.position   += new Vector3(moveVector.x, moveVector.y, 0);
-        _camera.transform.position       += new Vector3(moveVector.x, moveVector.y, 0);
+        _playerObject.transform.position      += new Vector3(moveVector.x, moveVector.y, 0);
+        _maskObject.transform.position        += new Vector3(moveVector.x, moveVector.y, 0);
+        _camera.transform.position            += new Vector3(moveVector.x, moveVector.y, 0);
+
+        for (int i = 0; i <= 3; i++)
+        {
+            _arrowObjects[i].transform.position += new Vector3(moveVector.x, moveVector.y, 0);
+        }
 
         _playerRenderer.sprite = _spritePlayer[(int)direction];
     } 
@@ -140,10 +244,21 @@ public class PlayerController : MonoBehaviour
         if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
         {
             _swipeStartPos = Input.GetTouch(0).position;
+            _swipeDelta = Vector2.zero;
+        }
+
+        if (Input.GetTouch(0).phase == TouchPhase.Moved)
+        {
+            _swipeDelta += Input.GetTouch(0).deltaPosition;
         }
 
         if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Ended)
         {
+            if (_swipeDelta == Vector2.zero)
+            {
+                return Direction.None;
+            }
+
             _swipeEndPos = Input.GetTouch(0).position;
 
             swipeDirection = _swipeEndPos - _swipeStartPos;
@@ -181,6 +296,19 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    void handleGuiTouch()
+    {
+        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Ended && _swipeDelta == Vector2.zero)
+        {
+            Ray raycast = Camera.main.ScreenPointToRay(Input.GetTouch(0).position);
+            RaycastHit raycastHit;
+            if (Physics.Raycast(raycast, out raycastHit))
+            {
+                print(raycastHit.collider.name);
+            }
+        }
+    }
+
     #if UNITY_EDITOR_WIN
     Direction detectKeyPress()
     {
@@ -205,7 +333,20 @@ public class PlayerController : MonoBehaviour
             return Direction.None;
         }
     }
-    #endif
+
+    void handleGuiClick()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            Vector2 raycast = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            RaycastHit2D raycastHit = Physics2D.Raycast(raycast, Vector2.zero);
+            if (raycastHit)
+            {
+                print(raycastHit.collider.name);
+            }
+        }
+    }
+#endif
 
     // Start is called before the first frame update
     void Start()
@@ -225,21 +366,30 @@ public class PlayerController : MonoBehaviour
             switch (_playerState)
             {
                 case PlayerStates.ListenInput:
+                    #if !UNITY_EDITOR_WIN
                     Direction swipe = detectSwipe();
 
                     if (swipe != Direction.None)
                     {
                         attemptMovePlayer(swipe);
                     }
+                    else
+                    {
+                        handleGuiTouch();
+                    }
+                    #endif
 
-#if UNITY_EDITOR_WIN
+                    #if UNITY_EDITOR_WIN
                     Direction keyMove = detectKeyPress();
 
                     if (keyMove != Direction.None)
                     {
                         attemptMovePlayer(keyMove);
                     }
-#endif
+                    
+                    handleGuiClick();
+                    #endif
+                    
                     break;
 
 
@@ -249,7 +399,7 @@ public class PlayerController : MonoBehaviour
                     
                     if (Vector3.Distance(_targetPos, _playerObject.transform.position) >= _targetDistance)
                     {
-                        movePlayer((int)_targetPos.x, (int)_targetPos.y, _targetDirection);
+                        placePlayerAt((int)_targetPos.x, (int)_targetPos.y, _targetDirection);
                         _playerState = PlayerStates.ListenInput;
                     }
 
@@ -282,7 +432,7 @@ public class PlayerController : MonoBehaviour
                     tempDir = Direction.Bottom;
                 }
 
-                movePlayer(_mazeController._startPoint.x - 1, _mazeController._startPoint.y - 1, tempDir);
+                placePlayerAt(_mazeController._startPoint.x - 1, _mazeController._startPoint.y - 1, tempDir);
                 _isInitialized = true;
             }
         }

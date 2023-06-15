@@ -25,6 +25,7 @@ public class MazeController : MonoBehaviour
     [SerializeField] Sprite _spriteWallTop;
     [SerializeField] Sprite _spriteStart;
     [SerializeField] Sprite _spriteEnd;
+    [SerializeField] Sprite _spriteTangle;
     [SerializeField] Sprite _spriteUnknown;
     GameObject _objectMazeTilesContainer;
     GameObject _objectMazeWallsContainer;

@@ -104,7 +104,7 @@ NavMeshSettings:
   serializedVersion: 2
   m_ObjectHideFlags: 0
   m_BuildSettings:
-    serializedVersion: 2
+    serializedVersion: 3
     agentTypeID: 0
     agentRadius: 0.5
     agentHeight: 2
@@ -117,7 +117,7 @@ NavMeshSettings:
     cellSize: 0.16666667
     manualTileSize: 0
     tileSize: 256
-    accuratePlacement: 0
+    buildHeightMesh: 0
     maxJobWorkers: 0
     preserveTilesOutsideBounds: 0
     debug:
@@ -163,6 +163,7 @@ MonoBehaviour:
   _spriteWallTop: {fileID: 21300000, guid: 277074bfe6c257f4da3b8e9d8103cf1c, type: 3}
   _spriteStart: {fileID: 21300000, guid: 16c9fcd80e1bd7c439fefddc31626e2f, type: 3}
   _spriteEnd: {fileID: 21300000, guid: 2f76d77a3052d3a43a771d1d65f9b810, type: 3}
+  _spriteTangle: {fileID: 21300000, guid: 36e1cc6cdf3ef884694c52c817b92cee, type: 3}
   _spriteUnknown: {fileID: 21300000, guid: 93d086b4892c83049aee251e3aa81d8b, type: 3}
 --- !u!4 &101579686
 Transform:
@@ -197,6 +198,11 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 17a83e19e11ec9b4ea42f4ceb963f36a, type: 3}
   - {fileID: 21300000, guid: 82bb1621ab518da409659753aaa4d2a6, type: 3}
   _spriteMask: {fileID: 21300000, guid: de2dcc2a201791e42a0cc0acf7513fb9, type: 3}
+  _spriteArrow:
+  - {fileID: 21300000, guid: 901d10d6779201545b9e844493510422, type: 3}
+  - {fileID: 21300000, guid: d4584c049418cd04e851fc9d3769f8bb, type: 3}
+  - {fileID: 21300000, guid: 8d40dd86b88f9f541ba97196bd0d16e9, type: 3}
+  - {fileID: 21300000, guid: 94f2f48bdcfec794185480a4e89dd866, type: 3}
   _mazeController: {fileID: 101579685}
   _playerSlideSpeed: 10
 --- !u!1 &451612086
@@ -239,9 +245,17 @@ Camera:
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
   m_SensorSize: {x: 36, y: 24}
   m_LensShift: {x: 0, y: 0}
-  m_FocalLength: 50
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
