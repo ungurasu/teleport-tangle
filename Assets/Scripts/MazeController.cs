@@ -15,6 +15,7 @@ public class MazeController : MonoBehaviour
     SpriteRenderer[,,] _spriteRendererArrWall      = new SpriteRenderer[1001, 1001, 4];
     GameObject[,] _spriteObjectMazeObject          = new GameObject[1001, 1001];
     SpriteRenderer[,] _spriteRendererMazeObject    = new SpriteRenderer[1001, 1001];
+    BoxCollider2D[,] _colliderMazeObject           = new BoxCollider2D[1001, 1001];
     GameObject[,] _spriteObjectMazeCorner          = new GameObject[1001, 1001];
     SpriteRenderer[,] _spriteRendererMazeCorner    = new SpriteRenderer[1001, 1001];
     [SerializeField] Sprite _spriteMazeTile;
@@ -27,13 +28,36 @@ public class MazeController : MonoBehaviour
     [SerializeField] Sprite _spriteEnd;
     [SerializeField] Sprite _spriteTangle;
     [SerializeField] Sprite _spriteEnemy;
-    [SerializeField] Sprite _spriteObstacle;
+    [SerializeField] public Sprite _spriteObstacle;
+    [SerializeField] public Sprite _spriteObstacleHighlited;
     [SerializeField] Sprite _spriteUnknown;
     GameObject _objectMazeTilesContainer;
     GameObject _objectMazeWallsContainer;
     GameObject _objectMazeObjectsContainer;
     public Point _startPoint;
     public Point _endPoint;
+
+    public int GetMazeContents(int xCoord, int yCoord)
+    {
+        if (yCoord >= _mazeSize || yCoord < 0 || xCoord >= _mazeSize || xCoord < 0)
+        {
+            return 4;
+        }
+
+        return _maze[(yCoord + 1) * 2, (xCoord + 1) * 2];
+    }
+
+    public void TeleportObstacle(int xCoord2, int yCoord2, int xCoord1, int yCoord1)
+    {
+        _maze[(yCoord1 + 1) * 2, (xCoord1 + 1) * 2] = 0;
+        _maze[(yCoord2 + 1) * 2, (xCoord2 + 1) * 2] = (int) MazeObjects.Obstacle;
+        _spriteObjectMazeObject[yCoord2 + 1, xCoord2 + 1] =
+            Instantiate(_spriteObjectMazeObject[yCoord1 + 1, xCoord1 + 1]);
+        Destroy(_spriteObjectMazeObject[yCoord1 + 1, xCoord1 + 1]);
+        _spriteObjectMazeObject[yCoord2 + 1, xCoord2 + 1].name = $"ObstacleX{xCoord2 + 1}Y{yCoord2 + 1}";
+        _spriteObjectMazeObject[yCoord2 + 1, xCoord2 + 1].transform.position =
+            new Vector3((float)xCoord2, (float)yCoord2, -0.2f);
+    }
 
     void drawWall(int xCoord, int yCoord, Direction direction)
     {
@@ -89,27 +113,27 @@ public class MazeController : MonoBehaviour
         switch (mazeObject)
         {
             case MazeObjects.Start:
-                objectName = string.Format("StartLabelX{0}Y{1}", xCoord, yCoord);
+                objectName = $"StartLabelX{xCoord}Y{yCoord}";
                 sprite = _spriteStart;
                 break;
 
             case MazeObjects.End:
-                objectName = string.Format("EndLabelX{0}Y{1}", xCoord, yCoord);
+                objectName = $"EndLabelX{xCoord}Y{yCoord}";
                 sprite = _spriteEnd;
                 break;
             
             case MazeObjects.Tangle:
-                objectName = string.Format("TangleX{0}Y{1}", xCoord, yCoord);
+                objectName = $"TangleX{xCoord}Y{yCoord}";
                 sprite = _spriteTangle;
                 break;
             
             case MazeObjects.Enemy:
-                objectName = string.Format("EnemyX{0}Y{1}", xCoord, yCoord);
+                objectName = $"EnemyX{xCoord}Y{yCoord}";
                 sprite = _spriteEnemy;
                 break;
             
             case MazeObjects.Obstacle:
-                objectName = string.Format("ObstacleX{0}Y{1}", xCoord, yCoord);
+                objectName = $"ObstacleX{xCoord}Y{yCoord}";
                 sprite = _spriteObstacle;
                 break;
 
@@ -123,6 +147,12 @@ public class MazeController : MonoBehaviour
         _spriteRendererMazeObject[yCoord, xCoord] = _spriteObjectMazeObject[yCoord, xCoord].AddComponent<SpriteRenderer>();
         _spriteRendererMazeObject[yCoord, xCoord].sprite = sprite;
         _spriteRendererMazeObject[yCoord, xCoord].transform.parent = _spriteObjectMazeObject[yCoord, xCoord].transform;
+
+        if (objectName.Contains("Obstacle"))
+        {
+            _colliderMazeObject[yCoord, xCoord] = _spriteObjectMazeObject[yCoord, xCoord].AddComponent<BoxCollider2D>();
+        }
+
         _spriteObjectMazeObject[yCoord, xCoord].transform.position = new Vector3(xPos, yPos, -0.2f);
 
         _spriteObjectMazeObject[yCoord, xCoord].transform.parent = _objectMazeObjectsContainer.transform;

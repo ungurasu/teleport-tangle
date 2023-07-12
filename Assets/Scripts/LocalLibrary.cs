@@ -44,7 +44,14 @@ namespace LocalLibrary
     enum PlayerStates : int
     { 
         ListenInput = 0,
-        Moving = 1
+        Moving = 1,
+        ListenObstacleTeleport = 2
+    }
+
+    enum MenuStates : int
+    {
+        ListenInput = 0,
+        FadeOut = 1
     }
 }
 

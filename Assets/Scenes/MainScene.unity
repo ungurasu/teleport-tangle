@@ -166,6 +166,7 @@ MonoBehaviour:
   _spriteTangle: {fileID: 21300000, guid: 36e1cc6cdf3ef884694c52c817b92cee, type: 3}
   _spriteEnemy: {fileID: 21300000, guid: ba8ac66fcdf00b64286bfda1db8e6b40, type: 3}
   _spriteObstacle: {fileID: 21300000, guid: 37c4a9d8f2072a543a2a9f327b87538e, type: 3}
+  _spriteObstacleHighlited: {fileID: 21300000, guid: 33823efc895d1df4492aa0d528242cc8, type: 3}
   _spriteUnknown: {fileID: 21300000, guid: 93d086b4892c83049aee251e3aa81d8b, type: 3}
 --- !u!4 &101579686
 Transform:
@@ -205,6 +206,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: d4584c049418cd04e851fc9d3769f8bb, type: 3}
   - {fileID: 21300000, guid: 8d40dd86b88f9f541ba97196bd0d16e9, type: 3}
   - {fileID: 21300000, guid: 94f2f48bdcfec794185480a4e89dd866, type: 3}
+  _spriteExitButton: {fileID: 21300000, guid: 6c46312945f88dc4d8a73dd4174c6f30, type: 3}
   _mazeController: {fileID: 101579685}
   _playerSlideSpeed: 10
 --- !u!1 &451612086

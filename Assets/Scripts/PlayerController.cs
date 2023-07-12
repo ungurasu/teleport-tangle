@@ -6,6 +6,7 @@ using UnityEngine;
 using LocalLibrary;
 using Unity.VisualScripting;
 using UnityEngine.UIElements;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
@@ -18,6 +19,7 @@ public class PlayerController : MonoBehaviour
     GameObject _arrowLeftObject;
     GameObject _arrowTopObject;
     GameObject _arrowRightObject;
+    GameObject _exitButton;
     GameObject[] _arrowObjects = new GameObject[4];
     BoxCollider2D[] _arrowColliders = new BoxCollider2D[4];
     SpriteRenderer _playerRenderer;
@@ -26,10 +28,12 @@ public class PlayerController : MonoBehaviour
     SpriteRenderer _arrowLeftRenderer;
     SpriteRenderer _arrowTopRenderer;
     SpriteRenderer _arrowRightRenderer;
+    SpriteRenderer _exitButtonRenderer;
     SpriteRenderer[] _arrowRenderers = new SpriteRenderer[4];
     [SerializeField] Sprite[] _spritePlayer = new Sprite[4];
     [SerializeField] Sprite _spriteMask;
     [SerializeField] Sprite[] _spriteArrow = new Sprite[4];
+    [SerializeField] Sprite _spriteExitButton;
     [SerializeField] MazeController _mazeController;
     Vector2 _swipeStartPos;
     Vector2 _swipeEndPos;
@@ -46,6 +50,7 @@ public class PlayerController : MonoBehaviour
     float _targetDistance;
     Direction _targetDirection;
     PlayerStates _playerState;
+    private GameObject _selectedObstacle;
 
     void createPerspective()
     {
@@ -60,7 +65,15 @@ public class PlayerController : MonoBehaviour
         _maskRenderer.sprite = _spriteMask;
         _maskRenderer.transform.parent = _maskObject.transform;
         _maskObject.transform.position = new Vector3(_playerCoords.x, _playerCoords.y, -0.4f);
-        
+
+        _exitButton = new GameObject("ExitButton");
+        _exitButtonRenderer = _exitButton.AddComponent<SpriteRenderer>();
+        _exitButtonRenderer.sprite = _spriteExitButton;
+        _exitButtonRenderer.transform.parent = _exitButton.transform;
+        _exitButton.AddComponent<BoxCollider2D>();
+        _exitButton.transform.position = new Vector3(_playerCoords.x, _playerCoords.y, -0.5f) + new Vector3(7f, 3f, 0);
+
+
         for (int i = 0; i <= 3; i++)
         {
             _arrowObjects[i] = new GameObject($"Arrow{(Direction)i}");
@@ -148,6 +161,7 @@ public class PlayerController : MonoBehaviour
         _playerObject.transform.position = new Vector3(_playerCoords.x, _playerCoords.y, -0.3f);
         _maskObject.transform.position = new Vector3(_playerCoords.x + 0.5f, _playerCoords.y + 0.5f, -0.4f);
         _camera.transform.position = new Vector3(_playerCoords.x + 0.5f, _playerCoords.y + 0.5f, -10f);
+        _exitButton.transform.position = new Vector3(_playerCoords.x + 3f, _playerCoords.y + 7f, -0.5f);
         
         updateArrows();
         
@@ -184,6 +198,7 @@ public class PlayerController : MonoBehaviour
         _playerObject.transform.position      += new Vector3(moveVector.x, moveVector.y, 0);
         _maskObject.transform.position        += new Vector3(moveVector.x, moveVector.y, 0);
         _camera.transform.position            += new Vector3(moveVector.x, moveVector.y, 0);
+        _exitButton.transform.position        += new Vector3(moveVector.x, moveVector.y, 0);
 
         for (int i = 0; i <= 3; i++)
         {
@@ -347,6 +362,65 @@ public class PlayerController : MonoBehaviour
                 {
                     teleportPlayer(_playerCoords.x + 2, _playerCoords.y, Direction.Right);
                 }
+                else if (raycastHit.collider.name.Contains("Obstacle"))
+                {
+                    _selectedObstacle = GameObject.Find(raycastHit.collider.name);
+                    SpriteRenderer spriteRenderer = _selectedObstacle.GetComponent<SpriteRenderer>();
+                    spriteRenderer.sprite = _mazeController._spriteObstacleHighlited;
+                    _playerState = PlayerStates.ListenObstacleTeleport;
+                }
+                else if (raycastHit.collider.name == "ExitButton")
+                {
+                    SceneManager.LoadScene("Scenes/MenuScene");
+                }
+            }
+        }
+    }
+    
+    void handleObstacleTouch()
+    {
+        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Ended && _swipeDelta == Vector2.zero)
+        {
+            Vector2 raycast = Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position);
+            RaycastHit2D raycastHit = Physics2D.Raycast(raycast, Vector2.zero);
+            
+            if (raycastHit)
+            {
+                if (raycastHit.collider.name == _selectedObstacle.name)
+                {
+                    SpriteRenderer spriteRenderer = _selectedObstacle.GetComponent<SpriteRenderer>();
+                    spriteRenderer.sprite = _mazeController._spriteObstacle;
+                    _playerState = PlayerStates.ListenInput;
+                }
+                else if (raycastHit.collider.name == "ExitButton")
+                {
+                    SceneManager.LoadScene("Scenes/MenuScene");
+                }
+            }
+            else
+            {
+                Vector3 mousePos = Input.mousePosition;
+                mousePos.z = Camera.main.nearClipPlane;
+                Vector3 worldPos = Camera.main.ScreenToWorldPoint(mousePos);
+                Point worldPosFloored = new Point(Mathf.FloorToInt(worldPos.x), Mathf.FloorToInt(worldPos.y));
+
+                if (0 < worldPosFloored - _playerCoords
+                    && worldPosFloored - _playerCoords < 3 
+                    && _mazeController.GetMazeContents(worldPosFloored.x, worldPosFloored.y) == (int) MazeObjects.Floor)
+                {
+                    SpriteRenderer spriteRenderer = _selectedObstacle.GetComponent<SpriteRenderer>();
+                    spriteRenderer.sprite = _mazeController._spriteObstacle;
+                    
+                    _mazeController.TeleportObstacle(
+                        worldPosFloored.x,
+                        worldPosFloored.y,
+                        (int) _selectedObstacle.transform.position.x,
+                        (int) _selectedObstacle.transform.position.y
+                    );
+                    
+                    _playerState = PlayerStates.ListenInput;
+                    Destroy(_selectedObstacle);
+                }
             }
         }
     }
@@ -399,6 +473,65 @@ public class PlayerController : MonoBehaviour
                 else if (raycastHit.collider.name == "ArrowRight")
                 {
                     teleportPlayer(_playerCoords.x + 2, _playerCoords.y, Direction.Right);
+                }
+                else if (raycastHit.collider.name.Contains("Obstacle"))
+                {
+                    _selectedObstacle = GameObject.Find(raycastHit.collider.name);
+                    SpriteRenderer spriteRenderer = _selectedObstacle.GetComponent<SpriteRenderer>();
+                    spriteRenderer.sprite = _mazeController._spriteObstacleHighlited;
+                    _playerState = PlayerStates.ListenObstacleTeleport;
+                }
+                else if (raycastHit.collider.name == "ExitButton")
+                {
+                    SceneManager.LoadScene("Scenes/MenuScene");
+                }
+            }
+        }
+    }
+    
+    void handleObstacleClick()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            Vector2 raycast = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            RaycastHit2D raycastHit = Physics2D.Raycast(raycast, Vector2.zero);
+            
+            if (raycastHit)
+            {
+                if (raycastHit.collider.name == _selectedObstacle.name)
+                {
+                    SpriteRenderer spriteRenderer = _selectedObstacle.GetComponent<SpriteRenderer>();
+                    spriteRenderer.sprite = _mazeController._spriteObstacle;
+                    _playerState = PlayerStates.ListenInput;
+                }
+                else if (raycastHit.collider.name == "ExitButton")
+                {
+                    SceneManager.LoadScene("Scenes/MenuScene");
+                }
+            }
+            else
+            {
+                Vector3 mousePos = Input.mousePosition;
+                mousePos.z = Camera.main.nearClipPlane;
+                Vector3 worldPos = Camera.main.ScreenToWorldPoint(mousePos);
+                Point worldPosFloored = new Point(Mathf.FloorToInt(worldPos.x), Mathf.FloorToInt(worldPos.y));
+
+                if (0 < worldPosFloored - _playerCoords
+                    && worldPosFloored - _playerCoords < 3 
+                    && _mazeController.GetMazeContents(worldPosFloored.x, worldPosFloored.y) == (int) MazeObjects.Floor)
+                {
+                    SpriteRenderer spriteRenderer = _selectedObstacle.GetComponent<SpriteRenderer>();
+                    spriteRenderer.sprite = _mazeController._spriteObstacle;
+                    
+                    _mazeController.TeleportObstacle(
+                        worldPosFloored.x,
+                        worldPosFloored.y,
+                        (int) _selectedObstacle.transform.position.x,
+                        (int) _selectedObstacle.transform.position.y
+                        );
+                    
+                    _playerState = PlayerStates.ListenInput;
+                    Destroy(_selectedObstacle);
                 }
             }
         }
@@ -461,7 +594,19 @@ public class PlayerController : MonoBehaviour
                     }
 
                     break;
-
+                
+                
+                case PlayerStates.ListenObstacleTeleport:
+                    
+                    #if !UNITY_EDITOR_WIN
+                    handleObstacleTouch();
+                    #endif
+                    
+                    #if UNITY_EDITOR_WIN
+                    handleObstacleClick();
+                    #endif
+                    
+                    break;
 
                 default:
                     break;
