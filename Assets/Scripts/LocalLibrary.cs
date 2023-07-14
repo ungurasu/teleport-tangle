@@ -45,7 +45,9 @@ namespace LocalLibrary
     { 
         ListenInput = 0,
         Moving = 1,
-        ListenObstacleTeleport = 2
+        ListenObstacleTeleport = 2,
+        FadeOut = 3,
+        FadeIn = 4
     }
 
     enum MenuStates : int

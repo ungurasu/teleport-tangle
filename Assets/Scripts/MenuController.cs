@@ -30,9 +30,27 @@ public class MenuController : MonoBehaviour
                 break;
             
             case MenuStates.FadeOut:
-                _spriteRendererBanner.color -= new Color(0, 0, 0, 0.01f);
-                _spriteRendererStartButton.color -= new Color(0, 0, 0, 0.01f);
-                _spriteRendererQuitButton.color -= new Color(0, 0, 0, 0.01f);
+                _spriteRendererBanner.color -= new Color(
+                    0,
+                    0, 
+                    0, 
+                    Time.deltaTime > _spriteRendererBanner.color.a ?
+                        _spriteRendererBanner.color.a : Time.deltaTime
+                );
+                _spriteRendererStartButton.color -= new Color(
+                    0,
+                    0, 
+                    0, 
+                    Time.deltaTime > _spriteRendererStartButton.color.a ?
+                        _spriteRendererStartButton.color.a : Time.deltaTime
+                );
+                _spriteRendererQuitButton.color -= new Color(
+                    0,
+                    0, 
+                    0, 
+                    Time.deltaTime > _spriteRendererQuitButton.color.a ?
+                        _spriteRendererQuitButton.color.a : Time.deltaTime
+                );
 
                 if (_spriteRendererBanner.color.a <= 0)
                 {

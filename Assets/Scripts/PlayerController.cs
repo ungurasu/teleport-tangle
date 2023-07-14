@@ -1,17 +1,16 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Xml.Linq;
 using UnityEngine;
 using LocalLibrary;
-using Unity.VisualScripting;
-using UnityEngine.UIElements;
+using TMPro;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
+    [SerializeField] private Font _fontScore;
     bool _isInitialized = false;
+    Canvas _canvas;
     Point _playerCoords;
+    Point _previousCoords;
     GameObject _playerObject;
     GameObject _camera;
     GameObject _maskObject;
@@ -21,6 +20,7 @@ public class PlayerController : MonoBehaviour
     GameObject _arrowRightObject;
     GameObject _exitButton;
     GameObject[] _arrowObjects = new GameObject[4];
+    [SerializeField] GameObject _scoreTextObject;
     BoxCollider2D[] _arrowColliders = new BoxCollider2D[4];
     SpriteRenderer _playerRenderer;
     SpriteRenderer _maskRenderer;
@@ -35,10 +35,18 @@ public class PlayerController : MonoBehaviour
     [SerializeField] Sprite[] _spriteArrow = new Sprite[4];
     [SerializeField] Sprite _spriteExitButton;
     [SerializeField] MazeController _mazeController;
+    TextMeshProUGUI _scoreTextMeshPro;
     Vector2 _swipeStartPos;
     Vector2 _swipeEndPos;
     Vector2 _swipeDelta;
     Vector3 _targetPos;
+    [SerializeField] float _playerSlideSpeed = 10f;
+    float _targetDistance;
+    Direction _targetDirection;
+    PlayerStates _playerState;
+    private GameObject _selectedObstacle;
+    private int _score = 0;
+    
     private Vector3[] _arrowOffsets =
     {
         new Vector3(0, -3f, 0),
@@ -46,11 +54,7 @@ public class PlayerController : MonoBehaviour
         new Vector3(0, 3f, 0),
         new Vector3(3f, 0 , 0)
     };
-    [SerializeField] float _playerSlideSpeed = 10f;
-    float _targetDistance;
-    Direction _targetDirection;
-    PlayerStates _playerState;
-    private GameObject _selectedObstacle;
+    
 
     void createPerspective()
     {
@@ -82,6 +86,15 @@ public class PlayerController : MonoBehaviour
             _arrowObjects[i].transform.position = new Vector3(_playerCoords.x, _playerCoords.y, -0.5f) + _arrowOffsets[i];
             _arrowColliders[i] = _arrowObjects[i].AddComponent<BoxCollider2D>();
         }
+
+        _scoreTextMeshPro = _scoreTextObject.GetComponent<TextMeshProUGUI>();
+        _scoreTextMeshPro.text = $"Moves: {_score}";
+    }
+
+    void incrementScore(int increment)
+    {
+        _score += increment;
+        _scoreTextMeshPro.text = $"Moves: {_score}";
     }
 
     void updateArrows()
@@ -269,17 +282,10 @@ public class PlayerController : MonoBehaviour
     {
         if (_mazeController.validateMove((x + 1) * 2, (y + 1) * 2))
         {
-            _mazeController.PlaceTangle(_playerCoords.x - 1, _playerCoords.y - 1);
-            _mazeController.PlaceTangle(_playerCoords.x, _playerCoords.y - 1);
-            _mazeController.PlaceTangle(_playerCoords.x + 1, _playerCoords.y - 1);
-            _mazeController.PlaceTangle(_playerCoords.x - 1, _playerCoords.y);
-            _mazeController.PlaceTangle(_playerCoords.x, _playerCoords.y);
-            _mazeController.PlaceTangle(_playerCoords.x + 1, _playerCoords.y);
-            _mazeController.PlaceTangle(_playerCoords.x - 1, _playerCoords.y + 1);
-            _mazeController.PlaceTangle(_playerCoords.x, _playerCoords.y + 1);
-            _mazeController.PlaceTangle(_playerCoords.x + 1, _playerCoords.y + 1);
-            
-            placePlayerAt( x, y, direction);
+            _previousCoords = _playerCoords;
+            _targetPos = new Vector3( x, y, _playerObject.transform.position.z);
+            _targetDirection = direction;
+            _playerState = PlayerStates.FadeOut;
         }
     }
 
@@ -590,7 +596,17 @@ public class PlayerController : MonoBehaviour
                     if (Vector3.Distance(_targetPos, _playerObject.transform.position) >= _targetDistance)
                     {
                         placePlayerAt((int)_targetPos.x, (int)_targetPos.y, _targetDirection);
-                        _playerState = PlayerStates.ListenInput;
+
+                        if (_playerRenderer.color.a > 0)
+                        {
+                            _playerState = PlayerStates.ListenInput;
+                            incrementScore(1);
+                        }
+                        else
+                        {
+                            _playerState = PlayerStates.FadeIn;
+                        }
+
                     }
 
                     break;
@@ -606,6 +622,50 @@ public class PlayerController : MonoBehaviour
                     handleObstacleClick();
                     #endif
                     
+                    break;
+                
+                case PlayerStates.FadeOut:
+                    _playerRenderer.color -= new Color(
+                        0,
+                        0,
+                        0,
+                        Time.deltaTime > _playerRenderer.color.a ?
+                            _playerRenderer.color.a : Time.deltaTime
+                    );
+
+                    if (_playerRenderer.color.a <= 0)
+                    {
+                        _playerState = PlayerStates.Moving;
+                    }
+
+                    break;
+                
+                case PlayerStates.FadeIn:
+                    _playerRenderer.color += new Color(
+                        0,
+                        0,
+                        0,
+                        Time.deltaTime + _playerRenderer.color.a > 1 ?
+                            1 - _playerRenderer.color.a : Time.deltaTime
+                    );
+
+                    if (_playerRenderer.color.a >= 1)
+                    {
+                        _playerState = PlayerStates.ListenInput;
+                        
+                        _mazeController.PlaceTangle(_previousCoords.x - 1, _previousCoords.y - 1);
+                        _mazeController.PlaceTangle(_previousCoords.x, _previousCoords.y - 1);
+                        _mazeController.PlaceTangle(_previousCoords.x + 1, _previousCoords.y - 1);
+                        _mazeController.PlaceTangle(_previousCoords.x - 1, _previousCoords.y);
+                        _mazeController.PlaceTangle(_previousCoords.x, _previousCoords.y);
+                        _mazeController.PlaceTangle(_previousCoords.x + 1, _previousCoords.y);
+                        _mazeController.PlaceTangle(_previousCoords.x - 1, _previousCoords.y + 1);
+                        _mazeController.PlaceTangle(_previousCoords.x, _previousCoords.y + 1);
+                        _mazeController.PlaceTangle(_previousCoords.x + 1, _previousCoords.y + 1);
+                        
+                        incrementScore(3);
+                    }
+
                     break;
 
                 default:
